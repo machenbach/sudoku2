@@ -2,6 +2,8 @@ package org.mike.sudoku;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -142,13 +144,30 @@ public class Solver {
 	 * return a new set that is the intersect of the two sets
 	 */
 	public <E> Set<E> intersect(Set<E> set1, Set<E> set2) {
-		Set<E> res = new HashSet<E>();
-		for (E e1 : set1)  {
-			if (set2.contains(e1)) {
-				res.add(e1);
-			}
+		try {
+			Set<E> res = set1.getClass().getDeclaredConstructor(Collection.class).newInstance(set1);
+			res.retainAll(set2);
+			return res;
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		return (res);
+		return null;
 	}
 	
 	/*
