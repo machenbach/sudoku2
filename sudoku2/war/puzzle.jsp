@@ -1,7 +1,7 @@
-<%@page import="org.mike.puzzle.NoSolutionException"%>
+<%@page import="org.mike.sudoku.NoSolutionException"%>
 <%@page import="java.util.Random"%>
 <%@page import="org.mike.util.Range"%>
-<%@page import="org.mike.puzzle.Puzzle"%>
+<%@page import="org.mike.sudoku.Builder"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
     
@@ -38,25 +38,25 @@ font-size:30px;
 </style>
 </head>
 <body>
-<% 
+<%
 	String level = request.getParameter("level");
 	if (level == null || level.isEmpty()) {
 		level = "35";
 	}
 	int num = Integer.parseInt(level);
 	// brute force this
-	Puzzle p; 
+	Builder p; 
 	int tries = 0;
 	while (true) {
 		try {
-			p = new Puzzle(num); 
-			break;
+	p = new Builder(num); 
+	break;
 		}
 		catch(NoSolutionException e) {
-			tries++;
+	tries++;
 		};
 	}
-	Random rnd = new Random(); 
+	Random rnd = new Random();
 %>
 
 <table style="width:405px; height:405px; align:center; border:2px solid black; margin-left:auto; margin-right:auto">

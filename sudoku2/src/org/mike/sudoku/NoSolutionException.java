@@ -1,4 +1,4 @@
-package org.mike.puzzle;
+package org.mike.sudoku;
 
 public class NoSolutionException extends Exception {
 

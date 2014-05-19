@@ -1,6 +1,11 @@
 package org.mike.sudoku;
 
-public class CantSolveException extends Exception {
+public class CantSolveException extends NoSolutionException {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -634939301432749835L;
 
 	public CantSolveException() {
 		// TODO Auto-generated constructor stub

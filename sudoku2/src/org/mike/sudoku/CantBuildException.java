@@ -1,32 +1,32 @@
-package org.mike.puzzle;
+package org.mike.sudoku;
 
-public class CantSolveException extends NoSolutionException {
+public class CantBuildException extends NoSolutionException {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -634939301432749835L;
+	private static final long serialVersionUID = -1407765473096959468L;
 
-	public CantSolveException() {
+	public CantBuildException() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public CantSolveException(String message) {
+	public CantBuildException(String message) {
 		super(message);
 		// TODO Auto-generated constructor stub
 	}
 
-	public CantSolveException(Throwable cause) {
+	public CantBuildException(Throwable cause) {
 		super(cause);
 		// TODO Auto-generated constructor stub
 	}
 
-	public CantSolveException(String message, Throwable cause) {
+	public CantBuildException(String message, Throwable cause) {
 		super(message, cause);
 		// TODO Auto-generated constructor stub
 	}
 
-	public CantSolveException(String message, Throwable cause,
+	public CantBuildException(String message, Throwable cause,
 			boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 		// TODO Auto-generated constructor stub

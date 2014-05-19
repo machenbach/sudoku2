@@ -1,4 +1,4 @@
-package org.mike.puzzle;
+package org.mike.sudoku;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -6,10 +6,9 @@ import java.util.PriorityQueue;
 import java.util.Random;
 
 import org.mike.sudoku.CantSolveException;
-import org.mike.sudoku.Solver;
 import org.mike.util.Range;
 
-public class Puzzle {
+public class Builder {
 	// the filled out puzzle
 	Integer[][] puzzle;
 	// whether or not to show the square
@@ -32,12 +31,12 @@ public class Puzzle {
 	 * try limit it will fail
 	 * @throws NoSolutionException Could not create a puzzle in maxium try count
 	 */
-	public Puzzle() throws NoSolutionException {
+	public Builder() throws NoSolutionException {
 		this(SHOW_DEFAULT);
 	}
 	
 	
-	public Puzzle(int showRatio) throws NoSolutionException {
+	public Builder(int showRatio) throws NoSolutionException {
 		// save the show ratio
 		this.showRatio = showRatio;
 		
