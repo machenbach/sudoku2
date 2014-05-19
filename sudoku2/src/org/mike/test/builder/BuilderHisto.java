@@ -1,4 +1,4 @@
-package org.mike.test.puzzle;
+package org.mike.test.builder;
 
 import org.junit.Test;
 import org.mike.sudoku.Builder;
@@ -6,7 +6,7 @@ import org.mike.sudoku.NoSolutionException;
 import org.mike.sudoku.Puzzle;
 import org.mike.util.Range;
 
-public class PuzzleHisto {
+public class BuilderHisto {
 	static int BUCKET_SIZE = 5;
 	static int NUM_SAMPLES = 100;
 
