@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Random;
 
-import org.mike.sudoku.CantSolveException;
 import org.mike.util.Range;
 
 public class Builder {
