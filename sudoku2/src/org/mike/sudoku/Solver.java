@@ -10,14 +10,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.mike.util.Range;
+
 public class Solver {
 	PrintStream logger;
 	
 	
 	Puzzle puzzle;
 	
-	int[] oneToNine = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-	int[] oneToThree = {0, 1, 2};
 	
 	public Solver()
 	{
@@ -129,12 +129,12 @@ public class Solver {
 	}
 	
 	/*
-	 * Create a set of number 1 to 9. oneToNine really goes 0 to 8
+	 * Create a set of number 1 to 9. 
 	 */
 	Set<Integer> initialSet()
 	{
 		Set<Integer> s = new HashSet<Integer>();
-		for (int i : oneToNine) {
+		for (int i : new Range(9)) {
 			s.add(i+1);
 		}
 		return s;
@@ -189,9 +189,9 @@ public class Solver {
 	 */
 	public void setRows()
 	{
-		for (int row : oneToNine) {
+		for (int row : new Range(9)) {
 			rowChoices[row] = initialSet();
-			for (int col : oneToNine) {
+			for (int col : new Range(9)) {
 				rowChoices[row].remove(puzzle.getSquare(row, col));
 			}
 		}
@@ -202,9 +202,9 @@ public class Solver {
 	 */
 	public void setCols()
 	{
-		for (int col : oneToNine) {
+		for (int col : new Range(9)) {
 			colChoices[col] = initialSet();
-			for (int row : oneToNine) {
+			for (int row : new Range(9)) {
 				colChoices[col].remove(puzzle.getSquare(row, col));
 			}
 		}
@@ -215,10 +215,10 @@ public class Solver {
 	 */
 	public void setBoxes()
 	{
-		for (int box : oneToNine) {
+		for (int box : new Range(9)) {
 			Set<Integer> res = initialSet();
 			LinearBoxNo lb = new LinearBoxNo(box);
-			for (int b : oneToNine) {
+			for (int b : new Range(9)) {
 				res.remove(puzzle.getSquare(lb.row(b), lb.col(b)));
 			}
 			boxChoices[lb.boxRow()][lb.boxCol()] = res;
@@ -233,8 +233,8 @@ public class Solver {
 	
 	public void fillChoices()
 	{
-		for (int col : oneToNine) {
-			for (int row : oneToNine) {
+		for (int col : new Range(9)) {
+			for (int row : new Range(9)) {
 				int boxCol = col / 3;
 				int boxRow = row / 3;
 				if (puzzle.isFilled(row, col)) {
@@ -253,19 +253,19 @@ public class Solver {
 	public void setNeeds()
 	{
 		// remove row dups
-		for (int row : oneToNine) {
-			for (int col : oneToNine) {
+		for (int row : new Range(9)) {
+			for (int col : new Range(9)) {
 				
 				// remove anything in our row
 				rowNeeds[row][col] = new HashSet<Integer>(puzzleChoices[row][col]);
-				for (int r : oneToNine) {
+				for (int r : new Range(9)) {
 					if (r != row) {
 						rowNeeds[row][col].removeAll(puzzleChoices[r][col]);
 					}
 				}
 				// remove anything in our column
 				colNeeds[row][col] = new HashSet<Integer>(puzzleChoices[row][col]);
-				for (int c : oneToNine) {
+				for (int c : new Range(9)) {
 					if (c != col) {
 						colNeeds[row][col].removeAll(puzzleChoices[row][c]);
 					}
@@ -273,7 +273,7 @@ public class Solver {
 				// remove anything in our box
 				boxNeeds[row][col] = new HashSet<Integer>(puzzleChoices[row][col]);
 				LinearBoxNo lb = new LinearBoxNo(row/3, col/3);
-				for (int b : oneToNine) {
+				for (int b : new Range(9)) {
 					if (row != lb.row(b) | col != lb.col(b)) {
 						boxNeeds[row][col].removeAll(puzzleChoices[lb.row(b)][lb.col(b)]);
 					}
@@ -291,10 +291,10 @@ public class Solver {
 	
 	public void findRowEquivalence()
 	{
-		for (int row : oneToNine) {
+		for (int row : new Range(9)) {
 			// This is the map we use to count the equal sets
 			Map<Set<Integer>, Integer> equalSets = new HashMap<Set<Integer>, Integer>();
-			for (int col : oneToNine) {
+			for (int col : new Range(9)) {
 				// initialize the equivalency sets, and start counting possible equivalent sets
 				Set<Integer> s = new HashSet<Integer>(puzzleChoices[row][col]);
 				rowEquivalents[row][col] = new HashSet<Integer>(s);
@@ -309,7 +309,7 @@ public class Solver {
 			for (Set<Integer> s : equalSets.keySet()) {
 				if (s.size() == equalSets.get(s)) {
 					// this is an equivalent set.  Remove all from all the sets
-					for (int col : oneToNine) {
+					for (int col : new Range(9)) {
 						rowEquivalents[row][col].removeAll(s);
 					}
 				}
@@ -320,10 +320,10 @@ public class Solver {
 	
 	public void findColEquivalence()
 	{
-		for (int col : oneToNine) {
+		for (int col : new Range(9)) {
 			// This is the map we use to count the equal sets
 			Map<Set<Integer>, Integer> equalSets = new HashMap<Set<Integer>, Integer>();
-			for (int row : oneToNine) {
+			for (int row : new Range(9)) {
 				// initialize the equivalency sets, and start counting possible equivalent sets
 				Set<Integer> s = new HashSet<Integer>(puzzleChoices[row][col]);
 				colEquivalents[row][col] = new HashSet<Integer>(s);
@@ -338,7 +338,7 @@ public class Solver {
 			for (Set<Integer> s : equalSets.keySet()) {
 				if (s.size() == equalSets.get(s)) {
 					// this is an equivalent set.  Remove all from all the sets
-					for (int row : oneToNine) {
+					for (int row : new Range(9)) {
 						colEquivalents[row][col].removeAll(s);
 					}
 				}
@@ -352,13 +352,13 @@ public class Solver {
 	
 	public void findBoxEquivalence()
 	{
-		for (int boxNo : oneToNine) {
+		for (int boxNo : new Range(9)) {
 			// get our linear box mapping
 			LinearBoxNo lb = new LinearBoxNo(boxNo);
 			
 			// This is the map we use to count the equal sets
 			Map<Set<Integer>, Integer> equalSets = new HashMap<Set<Integer>, Integer>();
-			for (int i : oneToNine) {
+			for (int i : new Range(9)) {
 				// initialize the equivalency sets, and start counting possible equivalent sets
 				Set<Integer> s = new HashSet<Integer>(puzzleChoices[lb.row(i)][lb.col(i)]);
 				boxEquivalents[lb.row(i)][lb.col(i)] = new HashSet<Integer>(s);
@@ -373,7 +373,7 @@ public class Solver {
 			for (Set<Integer> s : equalSets.keySet()) {
 				if (s.size() == equalSets.get(s)) {
 					// this is an equivalent set.  Remove all from all the sets
-					for (int i : oneToNine) {
+					for (int i : new Range(9)) {
 						boxEquivalents[lb.row(i)][lb.col(i)].removeAll(s);
 					}
 				}
@@ -456,8 +456,8 @@ public class Solver {
 	 */
 	public boolean madeProgress()
 	{
-		for (int row : oneToNine) {
-			for (int col : oneToNine) {
+		for (int row : new Range(9)) {
+			for (int col : new Range(9)) {
 				if (hasAnswer(row, col)) {
 					return true;
 				}
@@ -483,8 +483,8 @@ public class Solver {
 	
 	public void fillAnswers()
 	{
-		for (int row : oneToNine) {
-			for (int col : oneToNine) {
+		for (int row : new Range(9)) {
+			for (int col : new Range(9)) {
 				if (hasAnswer(row, col)) {
 					puzzle.setSquare(row, col, getAnswer(row, col));
 				}
@@ -525,8 +525,8 @@ public class Solver {
 		logger.println("Col ---");
 		printFlat(colChoices);
 		logger.println("Box ---");
-		for (int r : oneToThree) {
-			for (int c : oneToThree) {
+		for (int r : new Range(3)) {
+			for (int c : new Range(3)) {
 				logger.println(r +", " + c + ": " + boxChoices[r][c]);
 			}
 		}
@@ -566,7 +566,7 @@ public class Solver {
 	
 	public void printFlat(Set<Integer>[] ary) 
 	{
-		for (int i : oneToNine) {
+		for (int i : new Range(9)) {
 			logger.println(i + ": " + ary[i]);
 		}
 	}
@@ -574,8 +574,8 @@ public class Solver {
 	public void printArray(Set<Integer>[][] ary)
 	{
 		logger.println("  ... by Row");
-		for (int row : oneToNine) {
-			for (int col : oneToNine) {
+		for (int row : new Range(9)) {
+			for (int col : new Range(9)) {
 				logger.print(row + ", " + (col + ": "));
 				logger.print(ary[row][col].toString());
 				if (puzzle.isFilled(row, col)) {
@@ -587,8 +587,8 @@ public class Solver {
 
 		logger.println("  ... by Col");
 
-		for (int col : oneToNine) {
-			for (int row : oneToNine) {
+		for (int col : new Range(9)) {
+			for (int row : new Range(9)) {
 				logger.print(row + ", " + (col + ": "));
 				logger.print(ary[row][col].toString());
 				if (puzzle.isFilled(row, col)) {
@@ -600,10 +600,10 @@ public class Solver {
 		
 		logger.println("  ... by Box");
 		
-		for (int boxRow : oneToThree) {
-			for (int boxCol : oneToThree) {
+		for (int boxRow : new Range(3)) {
+			for (int boxCol : new Range(3)) {
 				LinearBoxNo lb = new LinearBoxNo(boxRow, boxCol);
-				for (int b : oneToNine) {
+				for (int b : new Range(9)) {
 					logger.print(lb.row(b) + ", " + (lb.col(b)) + ": ");
 					logger.print(ary[lb.row(b)][lb.col(b)].toString());
 					if (puzzle.isFilled(lb.row(b), lb.col(b))) {

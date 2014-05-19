@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
+import org.mike.util.Range;
+
 public class Puzzle {
 	int [][] board = new int[9][9];
-	int[] oneToNine = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 	
 	public void setSquare (int row, int col, int val) {
 		board[row][col] = val;
@@ -23,8 +24,8 @@ public class Puzzle {
 	
 	public boolean isSolved()
 	{
-		for (int row : oneToNine) {
-			for (int col : oneToNine) {
+		for (int row : new Range(9)) {
+			for (int col : new Range(9)) {
 				if (!isFilled(row,col)) {
 					return false;
 				}
@@ -47,11 +48,11 @@ public class Puzzle {
 	public void printBoard()
 	{
 		String header = "+---+---+---+";
-		for (int r : oneToNine) {
+		for (int r : new Range(9)) {
 			if (r % 3 == 0) {
 				System.out.println(header);
 			}
-			for (int c : oneToNine) {
+			for (int c : new Range(9)) {
 				if (c % 3 == 0) {
 					System.out.print("|");
 				}
@@ -69,8 +70,8 @@ public class Puzzle {
 	}
 	
 	public void readBoard(Reader boardReader) throws IOException {
-		for (int row : oneToNine) {
-			for (int col : oneToNine) {
+		for (int row : new Range(9)) {
+			for (int col : new Range(9)) {
 				int c = boardReader.read();
 				if (Character.isDigit(c)) {
 					board[row][col] = (c - '0');
