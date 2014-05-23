@@ -7,7 +7,7 @@ import java.io.StringReader;
 import org.mike.util.Range;
 
 public class Puzzle {
-	int [][] board = new int[9][9];
+	Integer [][] board = new Integer[9][9];
 	
 	public void setSquare (int row, int col, int val) {
 		board[row][col] = val;
@@ -19,7 +19,7 @@ public class Puzzle {
 	}
 	
 	public boolean isFilled(int row, int col) {
-		return board[row][col] > 0 && board[row][col] < 10;
+		return board[row][col] != null;
 	}
 	
 	public boolean isSolved()
@@ -75,10 +75,7 @@ public class Puzzle {
 				int c = boardReader.read();
 				if (Character.isDigit(c)) {
 					board[row][col] = (c - '0');
-				}
-				else {
-					board[row][col] = 0;
-				}
+				};
 			}
 		}
 		
@@ -88,12 +85,12 @@ public class Puzzle {
 		StringBuffer sb = new StringBuffer();
 		for (int row = 0; row < 9; row++) {
 			for (int col = 0; col < 9; col++) {
-				int sq = board[row][col];
-				if (sq > 0 && sq < 10) {
-					sb.append(Integer.toString(sq));
+				Integer sq = board[row][col];
+				if (sq == null) {
+					sb.append(" ");
 				}
 				else {
-					sb.append(" ");
+					sb.append(sq.toString());
 				}
 			}
 		}

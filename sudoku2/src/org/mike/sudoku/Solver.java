@@ -12,6 +12,11 @@ import java.util.Set;
 
 import org.mike.util.Range;
 
+/*
+ * Starting work on a new solver, that I hope is a little simpler, and better.
+ * Two phases.  First, subtract the known elements in row, column and box from
+ * overall puzzle.  Currently called "choices", this is more complicated than it needs to be
+ */
 public class Solver {
 	PrintStream logger;
 	
@@ -47,127 +52,14 @@ public class Solver {
 		puzzle.readBoard(puzzleStr);
 	}
 	
-	/*
-	 * There are nine elements in each set.  This is the number needed in
-	 */
-
-	@SuppressWarnings("unchecked")
-	Set<Integer>[] colChoices = new Set [9];
 	
-	@SuppressWarnings("unchecked")
-	Set<Integer>[] rowChoices = new Set[9];
-	
-	@SuppressWarnings("unchecked")
-	Set<Integer>[][] boxChoices = new Set[3][3];
-	
-	@SuppressWarnings("unchecked")
-	Set<Integer>[][] puzzleChoices = new Set[9][9]; 
-	
-	@SuppressWarnings("unchecked")
-	Set<Integer>[][] colNeeds = new Set[9][9]; 
-	
-	@SuppressWarnings("unchecked")
-	Set<Integer>[][] rowNeeds = new Set[9][9]; 
-	
-	@SuppressWarnings("unchecked")
-	Set<Integer>[][] boxNeeds = new Set[9][9]; 
-	
-	@SuppressWarnings("unchecked")
-	Set<Integer>[][] rowEquivalents = new Set[9][9]; 
-	
-	@SuppressWarnings("unchecked")
-	Set<Integer>[][] colEquivalents = new Set[9][9]; 
-	
-	@SuppressWarnings("unchecked")
-	Set<Integer>[][] boxEquivalents = new Set[9][9]; 
-
-	
-	/*
-	 * An inner class to convert 2d box numbers to linear numbers and back
-	 */
-	class LinearBoxNo {
-		// row and column of the box.  0, 1 or 2
-		int row;
-		int col;
-		
-		public LinearBoxNo(int row, int col) {
-			this.row = row;
-			this.col = col;
-		}
-		
-		public LinearBoxNo (int boxNo) {
-			this (boxNo / 3, boxNo % 3);
-		}
-		
-		//convert the row and column of the square (r and c) into a linear box number
-		public int box (int r, int c)
-		{
-			return 3 * (r - row) + (c - col);
-		}
-		
-		// convert the linear box to a row
-		public int row (int lb)
-		{
-			return 3 * row + lb/3;
-		}
-		
-		//convert the linear box to a column
-		public int col (int lb)
-		{
-			return 3 * col + lb % 3;
-		}
-		
-		public int boxRow()
-		{
-			return row;
-		}
-		
-		public int boxCol()
-		{
-			return col;
-		}
-	}
 	
 	/*
 	 * Create a set of number 1 to 9. 
 	 */
 	Set<Integer> initialSet()
 	{
-		Set<Integer> s = new HashSet<Integer>();
-		for (int i : new Range(9)) {
-			s.add(i+1);
-		}
-		return s;
-	}
-	
-	/*
-	 * return a new set that is the intersect of the two sets
-	 */
-	public <E> Set<E> intersect(Set<E> set1, Set<E> set2) {
-		try {
-			Set<E> res = set1.getClass().getDeclaredConstructor(Collection.class).newInstance(set1);
-			res.retainAll(set2);
-			return res;
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+		return new HashSet<Integer>(Range.rangeList(1, 10));
 	}
 	
 	/*

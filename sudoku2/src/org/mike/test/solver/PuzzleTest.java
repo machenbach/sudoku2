@@ -38,6 +38,18 @@ public class PuzzleTest {
 		String bd2 = puzzle.toString();
 		assertTrue(bd2.length() == 81 && bd2.startsWith(bd));
 	}
-
+	
+	@Test
+	public void testSet() {
+		Puzzle puzzle = new Puzzle();
+		if (puzzle.isFilled(1,1)) {
+			fail("Bad filled read");
+		}
+		
+		puzzle.setSquare(1, 1, 1);
+		if (!puzzle.isFilled(1, 1)) {
+			fail("Didn't fill correctly");
+		}
+	}
 
 }
