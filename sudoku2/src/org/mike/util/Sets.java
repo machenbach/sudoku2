@@ -2,6 +2,7 @@ package org.mike.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 public class Sets {
@@ -75,7 +76,12 @@ public class Sets {
 		Set<E> res = copy(set1);
 		res.removeAll(set2);
 		return res;
-}
+	}
+	
+	public static <E> E elem (Set<E> set) {
+		Iterator<E> itr = set.iterator();
+		return itr.next();
+	}
 
 
 }

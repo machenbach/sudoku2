@@ -7,7 +7,7 @@ package org.mike.util;
  * rows() returns the 9x9 row positions for this box, and cols() the 9x9 columns
  * static boxAt takes a 9x9 row,col, and returns the box it's in
  */
-class Box {
+public class Box {
 	// row and column of the box.  0, 1 or 2
 	int boxRow;
 	int boxCol;

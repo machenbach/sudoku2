@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mike.util.Range;
+import org.mike.util.Box;
+import org.mike.util.Sets;
 
 /*
  * Starting work on a new solver, that I hope is a little simpler, and better.
@@ -22,6 +24,9 @@ public class Solver {
 	
 	
 	Puzzle puzzle;
+	
+	
+	Set<Integer>[][] possible = new Set[9][9];
 	
 	
 	public Solver()
@@ -77,201 +82,45 @@ public class Solver {
 	}
 	
 	/*
-	 * set the row needs
+	 * first apply the sieve.  For any square (r, c) that isn't solved, set possible[r][c] to the possible values.
+	 * This will be all possible values minus the known row, column and box solutions
 	 */
-	public void setRows()
-	{
-		for (int row : new Range(9)) {
-			rowChoices[row] = initialSet();
-			for (int col : new Range(9)) {
-				rowChoices[row].remove(puzzle.getSquare(row, col));
-			}
-		}
-	}
-	
-	/*
-	 * set the column needs
-	 */
-	public void setCols()
-	{
-		for (int col : new Range(9)) {
-			colChoices[col] = initialSet();
-			for (int row : new Range(9)) {
-				colChoices[col].remove(puzzle.getSquare(row, col));
-			}
-		}
-	}
-	
-	/*
-	 * set the needs in the boxes
-	 */
-	public void setBoxes()
-	{
-		for (int box : new Range(9)) {
-			Set<Integer> res = initialSet();
-			LinearBoxNo lb = new LinearBoxNo(box);
-			for (int b : new Range(9)) {
-				res.remove(puzzle.getSquare(lb.row(b), lb.col(b)));
-			}
-			boxChoices[lb.boxRow()][lb.boxCol()] = res;
-			
-		}
-	}
-	
-	
-	/*
-	 * Now find all the choices we have in the puzzle
-	 */
-	
-	public void fillChoices()
-	{
-		for (int col : new Range(9)) {
-			for (int row : new Range(9)) {
-				int boxCol = col / 3;
-				int boxRow = row / 3;
-				if (puzzle.isFilled(row, col)) {
-					puzzleChoices[row][col] = oneElem(puzzle.getSquare(row, col));
-				}
-				else {
-					puzzleChoices[row][col] = intersect(colChoices[col], intersect(rowChoices[row], boxChoices[boxRow][boxCol]));
-				}
-			}
-		}
-	}
-	
-	/*
-	 * This finds the squares that have a unique entry.  Must be called after fillChoices
-	 */
-	public void setNeeds()
-	{
-		// remove row dups
-		for (int row : new Range(9)) {
-			for (int col : new Range(9)) {
-				
-				// remove anything in our row
-				rowNeeds[row][col] = new HashSet<Integer>(puzzleChoices[row][col]);
-				for (int r : new Range(9)) {
-					if (r != row) {
-						rowNeeds[row][col].removeAll(puzzleChoices[r][col]);
+	public void sieve() {
+		for (int r : new Range(9)) {
+			for (int c : new Range(9)) {
+				if (! puzzle.isFilled(r, c)) {
+					// initialize to all possible values
+					Set<Integer> pos = initialSet();
+					
+					// remove the elements that are known in the row
+					for (int prow : new Range(9)) {
+						if (puzzle.isFilled(prow, c)) {
+							pos.remove(puzzle.getSquare(prow, c));
+						}
 					}
-				}
-				// remove anything in our column
-				colNeeds[row][col] = new HashSet<Integer>(puzzleChoices[row][col]);
-				for (int c : new Range(9)) {
-					if (c != col) {
-						colNeeds[row][col].removeAll(puzzleChoices[row][c]);
+					
+					// remove the elements in the column
+					for (int pcol : new Range(9)) {
+						if (puzzle.isFilled(r, pcol)) {
+							pos.remove(puzzle.getSquare(r, pcol));
+						}
 					}
-				}
-				// remove anything in our box
-				boxNeeds[row][col] = new HashSet<Integer>(puzzleChoices[row][col]);
-				LinearBoxNo lb = new LinearBoxNo(row/3, col/3);
-				for (int b : new Range(9)) {
-					if (row != lb.row(b) | col != lb.col(b)) {
-						boxNeeds[row][col].removeAll(puzzleChoices[lb.row(b)][lb.col(b)]);
+					
+					// finally, remove all the known values in the box
+					Box b = Box.boxAt(r, c);
+					for (int prow : b.rows()) {
+						for (int pcol : b.cols()) {
+							if (puzzle.isFilled(prow, pcol)) {
+								pos.remove(puzzle.getSquare(prow, pcol));
+							}
+						}
 					}
+					possible[r][c] = pos;
 				}
 			}
 		}
 	}
 	
-	/*
-	 * This section deals with equivalent squares.  Equivalent squares are in a box that have the same set of choices.
-	 * the number of boxes is equal to the length of the set, we can remove the equivalences.  For example, suppose 
-	 * that four boxes have the choice set {6, 7, 8, 9}.  This is an equivalency, and this set can be removed from
-	 * the other choices.
-	 */
-	
-	public void findRowEquivalence()
-	{
-		for (int row : new Range(9)) {
-			// This is the map we use to count the equal sets
-			Map<Set<Integer>, Integer> equalSets = new HashMap<Set<Integer>, Integer>();
-			for (int col : new Range(9)) {
-				// initialize the equivalency sets, and start counting possible equivalent sets
-				Set<Integer> s = new HashSet<Integer>(puzzleChoices[row][col]);
-				rowEquivalents[row][col] = new HashSet<Integer>(s);
-				if (! equalSets.containsKey(s)) {
-					equalSets.put(s, 0);
-				}
-				equalSets.put(s, equalSets.get(s) + 1);
-			}
-			
-			// Now go through the equivalency map.  If the set legnth is the same as the square count,
-			// we can remove that set from the others
-			for (Set<Integer> s : equalSets.keySet()) {
-				if (s.size() == equalSets.get(s)) {
-					// this is an equivalent set.  Remove all from all the sets
-					for (int col : new Range(9)) {
-						rowEquivalents[row][col].removeAll(s);
-					}
-				}
-			}
-			
-		}
-	}
-	
-	public void findColEquivalence()
-	{
-		for (int col : new Range(9)) {
-			// This is the map we use to count the equal sets
-			Map<Set<Integer>, Integer> equalSets = new HashMap<Set<Integer>, Integer>();
-			for (int row : new Range(9)) {
-				// initialize the equivalency sets, and start counting possible equivalent sets
-				Set<Integer> s = new HashSet<Integer>(puzzleChoices[row][col]);
-				colEquivalents[row][col] = new HashSet<Integer>(s);
-				if (! equalSets.containsKey(s)) {
-					equalSets.put(s, 0);
-				}
-				equalSets.put(s, equalSets.get(s) + 1);
-			}
-			
-			// Now go through the equivalency map.  If the set legnth is the same as the square count,
-			// we can remove that set from the others
-			for (Set<Integer> s : equalSets.keySet()) {
-				if (s.size() == equalSets.get(s)) {
-					// this is an equivalent set.  Remove all from all the sets
-					for (int row : new Range(9)) {
-						colEquivalents[row][col].removeAll(s);
-					}
-				}
-			}
-			
-		}
-	}
-	
-	
-	
-	
-	public void findBoxEquivalence()
-	{
-		for (int boxNo : new Range(9)) {
-			// get our linear box mapping
-			LinearBoxNo lb = new LinearBoxNo(boxNo);
-			
-			// This is the map we use to count the equal sets
-			Map<Set<Integer>, Integer> equalSets = new HashMap<Set<Integer>, Integer>();
-			for (int i : new Range(9)) {
-				// initialize the equivalency sets, and start counting possible equivalent sets
-				Set<Integer> s = new HashSet<Integer>(puzzleChoices[lb.row(i)][lb.col(i)]);
-				boxEquivalents[lb.row(i)][lb.col(i)] = new HashSet<Integer>(s);
-				if (! equalSets.containsKey(s)) {
-					equalSets.put(s, 0);
-				}
-				equalSets.put(s, equalSets.get(s) + 1);
-			}
-			
-			// Now go through the equivalency map.  If the set legnth is the same as the square count,
-			// we can remove that set from the others
-			for (Set<Integer> s : equalSets.keySet()) {
-				if (s.size() == equalSets.get(s)) {
-					// this is an equivalent set.  Remove all from all the sets
-					for (int i : new Range(9)) {
-						boxEquivalents[lb.row(i)][lb.col(i)].removeAll(s);
-					}
-				}
-			}
-		}
-	}
 	
 	
 	/*
@@ -286,16 +135,10 @@ public class Solver {
 			return false;
 		}
 		// if puzzleChoices elements are null, step has not been run
-		if (puzzleChoices[row][col] == null) {
+		if (possible[row][col] == null) {
 			return false;
 		}
-		return (puzzleChoices[row][col].size() == 1) ||
-				(boxNeeds[row][col].size() == 1) ||
-				(colNeeds[row][col].size() == 1) ||
-				(rowNeeds[row][col].size() == 1) ||
-				(rowEquivalents[row][col].size() == 1) ||
-				(colEquivalents[row][col].size() == 1) ||
-				(boxEquivalents[row][col].size() == 1);
+		return possible[row][col].size() == 1;
 	}
 	
 	public boolean isSolved()
@@ -318,28 +161,7 @@ public class Solver {
 		if (!hasAnswer(row, col)) {
 			return 0;
 		}
-		if (puzzleChoices[row][col].size() == 1) {
-			return getElem(puzzleChoices, row, col);
-		}
-		if (rowNeeds[row][col].size() == 1) {
-			return getElem(rowNeeds, row, col);
-		}
-		if (colNeeds[row][col].size() == 1) {
-			return getElem(colNeeds, row, col);
-		}
-		if (boxNeeds[row][col].size() == 1) {
-			return getElem(boxNeeds, row, col);
-		}
-		if (rowEquivalents[row][col].size() == 1) {
-			return getElem(rowEquivalents, row, col);
-		}
-		if (colEquivalents[row][col].size() == 1) {
-			return getElem(colEquivalents, row, col);
-		}
-		if (boxEquivalents[row][col].size() == 1) {
-			return getElem(boxEquivalents, row, col);
-		}
-		return 0;
+		return Sets.elem(possible[row][col]);
 	}
 	
 	
@@ -363,14 +185,7 @@ public class Solver {
 	 */
 	public void step()
 	{
-		setRows();
-		setCols();
-		setBoxes();
-		fillChoices();
-		setNeeds();
-		findRowEquivalence();
-		findColEquivalence();
-		findBoxEquivalence();
+		sieve();
 	}
 	
 	public void fillAnswers()
@@ -410,50 +225,9 @@ public class Solver {
 		return(puzzle.toString());
 	}
 	
-	public void printChoices()
-	{
-		logger.println("Row ---");
-		printFlat(rowChoices);
-		logger.println("Col ---");
-		printFlat(colChoices);
-		logger.println("Box ---");
-		for (int r : new Range(3)) {
-			for (int c : new Range(3)) {
-				logger.println(r +", " + c + ": " + boxChoices[r][c]);
-			}
-		}
-		logger.println("Choices ---");
-		printArray(puzzleChoices);
-	}
-	
-	public void printNeeds() {
-		logger.println("Row needs ---");
-		printArray(rowNeeds);
-		
-		logger.println("Col needs ---");
-		printArray(colNeeds);
-		
-		logger.println("Box needs ---");
-		printArray(boxNeeds);
-	}
-
-	public void printEquivalents()
-	{
-		logger.println("Row equivalents ---");
-		printArray(rowEquivalents);
-		
-		logger.println("Col equivalents ---");
-		printArray(colEquivalents);
-		
-		logger.println("Box equivalents ---");
-		printArray(boxEquivalents);
-	}
 	
 	public void printSolverInfo()
 	{
-		printChoices();
-		printNeeds();
-		printEquivalents();
 	}
 	
 	public void printFlat(Set<Integer>[] ary) 
@@ -465,47 +239,6 @@ public class Solver {
 
 	public void printArray(Set<Integer>[][] ary)
 	{
-		logger.println("  ... by Row");
-		for (int row : new Range(9)) {
-			for (int col : new Range(9)) {
-				logger.print(row + ", " + (col + ": "));
-				logger.print(ary[row][col].toString());
-				if (puzzle.isFilled(row, col)) {
-					logger.print(" <= filled");
-				}
-				logger.println();
-			}
-		}
-
-		logger.println("  ... by Col");
-
-		for (int col : new Range(9)) {
-			for (int row : new Range(9)) {
-				logger.print(row + ", " + (col + ": "));
-				logger.print(ary[row][col].toString());
-				if (puzzle.isFilled(row, col)) {
-					logger.print(" <= filled");
-				}
-				logger.println();
-			}
-		}
-		
-		logger.println("  ... by Box");
-		
-		for (int boxRow : new Range(3)) {
-			for (int boxCol : new Range(3)) {
-				LinearBoxNo lb = new LinearBoxNo(boxRow, boxCol);
-				for (int b : new Range(9)) {
-					logger.print(lb.row(b) + ", " + (lb.col(b)) + ": ");
-					logger.print(ary[lb.row(b)][lb.col(b)].toString());
-					if (puzzle.isFilled(lb.row(b), lb.col(b))) {
-						logger.print(" <== filled");
-					}
-					logger.println();
-				}
-				logger.println();
-			}
-		}
 	}
 
 }
