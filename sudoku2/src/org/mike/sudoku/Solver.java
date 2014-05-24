@@ -2,16 +2,12 @@ package org.mike.sudoku;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
-import org.mike.util.Range;
 import org.mike.util.Box;
+import org.mike.util.Range;
 import org.mike.util.Sets;
 
 /*

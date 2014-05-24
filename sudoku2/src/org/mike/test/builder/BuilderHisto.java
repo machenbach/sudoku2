@@ -3,7 +3,6 @@ package org.mike.test.builder;
 import org.junit.Test;
 import org.mike.sudoku.Builder;
 import org.mike.sudoku.NoSolutionException;
-import org.mike.sudoku.Puzzle;
 import org.mike.util.Range;
 
 public class BuilderHisto {

@@ -1,6 +1,6 @@
 package org.mike.test.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 

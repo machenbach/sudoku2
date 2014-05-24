@@ -1,10 +1,7 @@
 package org.mike.test.solver;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-
-import java.util.HashSet;
-import java.util.Set;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -1,10 +1,11 @@
 package org.mike.test.builder;
 
+import static org.junit.Assert.fail;
+
 import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.mike.sudoku.Builder;
 import org.mike.sudoku.NoSolutionException;
 import org.mike.util.Range;
