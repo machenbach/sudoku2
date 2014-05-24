@@ -31,7 +31,6 @@ public class FullPuzzles {
 				solver.printSolverInfo();
 				return false;
 			}
-			solver.fillAnswers();
 			if (puzzle.isSolved()) {
 				return true;
 			}

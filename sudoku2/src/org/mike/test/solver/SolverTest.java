@@ -24,11 +24,6 @@ public class SolverTest {
 	public void testInitial() {
 		Solver solver = new Solver(puzzle);
 		assertFalse(solver.madeProgress());
-		for (int r : oneToNine) {
-			for (int c : oneToNine) {
-				assertFalse(solver.hasAnswer(r, c));
-			}
-		}
 		solver.step();
 		assertTrue(solver.madeProgress());
 		
@@ -37,11 +32,10 @@ public class SolverTest {
 	@Test
 	public void testPrintChoices() {
 		Solver solver = new Solver(puzzle);
-		solver.step();
 		solver.printSolverInfo();
 		puzzle.printBoard();
+		solver.step();
 		assertTrue(solver.madeProgress());
-		solver.fillAnswers();
 		puzzle.printBoard();
 		assertFalse(solver.madeProgress());
 		

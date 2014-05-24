@@ -3,7 +3,6 @@ package org.mike.sudoku;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.mike.util.Box;
@@ -12,17 +11,21 @@ import org.mike.util.Sets;
 
 /*
  * Starting work on a new solver, that I hope is a little simpler, and better.
- * Two phases.  First, subtract the known elements in row, column and box from
- * overall puzzle.  Currently called "choices", this is more complicated than it needs to be
+ * Several phases.  First, subtract the known elements in row, column and box from
+ * overall puzzle (the sieve)
+ * Next find out if only one square has an answer remaining (the comb)
  */
 public class Solver {
 	PrintStream logger;
 	
-	
+	// the puzzle we're working on
 	Puzzle puzzle;
 	
-	
+	// used by the sieve and comb to find solutions
 	Set<Integer>[][] possible = new Set[9][9];
+	
+	// reset at the start of each step.  Shows whether or not we made progress in this step
+	boolean _madeProgress;
 	
 	
 	public Solver()
@@ -63,25 +66,24 @@ public class Solver {
 		return new HashSet<Integer>(Range.rangeList(1, 10));
 	}
 	
-	/*
-	 * return a set of a single element
-	 */
-	Set<Integer> oneElem(int i) {
-		Set<Integer> res = new HashSet<Integer>();
-		res.add(i);
-		return res;
-	}
-	
-	Set<Integer> phi()
-	{
-		return new HashSet<Integer>();
+	class Answer {
+		public int row;
+		public int col;
+		public int val;
+		
+		public Answer(int r, int c, int v) {
+			row = r;
+			col = c;
+			val = v;
+		}
 	}
 	
 	/*
 	 * first apply the sieve.  For any square (r, c) that isn't solved, set possible[r][c] to the possible values.
 	 * This will be all possible values minus the known row, column and box solutions
 	 */
-	public void sieve() {
+	public Set<Answer> sieve() {
+		Set<Answer> answers = new HashSet<Answer>();
 		for (int r : new Range(9)) {
 			for (int c : new Range(9)) {
 				if (! puzzle.isFilled(r, c)) {
@@ -111,31 +113,62 @@ public class Solver {
 							}
 						}
 					}
+					// need to possible answers for comb set
 					possible[r][c] = pos;
+					if (pos.size() == 1) {
+						answers.add(new Answer(r,c,Sets.elem(pos)));
+					}
 				}
 			}
 		}
+		return answers;
 	}
-	
-	
-	
 	/*
-	 *  Does this square have an answer?  This square has an answer if
-	 * 1. it has not been filled in
-	 * 2. There is only one choice or
-	 * 3. there is only one need
+	 * Next is the comb.  We union the other possible answers, and remove them from the current set.
+	 * If there's exactly one, we have a solution (i.e. this is the only sqaure with this value left
 	 */
-	public boolean hasAnswer(int row, int col) 
-	{
-		if (puzzle.isFilled(row, col)) {
-			return false;
+	public Set<Answer> comb() {
+		Set<Answer> answers = new HashSet<Answer>();
+		for (int r : new Range(9)) {
+			for (int c : new Range(9)) {
+				if (possible[r][c] != null) {
+					// initialize to all possible values
+					Set<Integer> cmb = new HashSet<Integer>();
+					
+					// union all possible row elements (except this row)
+					for (int prow : new Range(9)) {
+						if (prow != r && possible[prow][c] != null) {
+							cmb.addAll(possible[prow][c]);
+						}
+					}
+					
+					// union all possible column elements, except this col
+					for (int pcol : new Range(9)) {
+						if (pcol != c && possible[r][pcol] != null) {
+							cmb.addAll(possible[r][pcol]);
+						}
+					}
+					
+					// finally, union everything in the box, except this square
+					Box b = Box.boxAt(r, c);
+					for (int prow : b.rows()) {
+						for (int pcol : b.cols()) {
+							if (prow != r && pcol != c && possible[prow][pcol] != null) {
+								cmb.addAll(possible[prow][pcol]);
+							}
+						}
+					}
+					Set<Integer> rem = Sets.diff(possible[r][c], cmb);
+					if (rem.size() == 1) {
+						answers.add(new Answer(r,c,Sets.elem(rem)));
+					}
+				}
+			}
 		}
-		// if puzzleChoices elements are null, step has not been run
-		if (possible[row][col] == null) {
-			return false;
-		}
-		return possible[row][col].size() == 1;
+		return answers;
 	}
+	
+	
 	
 	public boolean isSolved()
 	{
@@ -143,37 +176,13 @@ public class Solver {
 	}
 	
 	
-	int getElem(Set<Integer>[][] set, int row, int col)
-	{
-		Iterator<Integer> itr = set[row][col].iterator();
-		return itr.next().intValue();
-	}
-	
-	/*
-	 * getAnswer.  Get the answer to the puzzle, return 0 if it doesn't have one
-	 */
-	public int getAnswer(int row, int col)
-	{
-		if (!hasAnswer(row, col)) {
-			return 0;
-		}
-		return Sets.elem(possible[row][col]);
-	}
-	
 	
 	/*
 	 * Look to see if we made any progress in this step.  This is defined has having found an answer anywhere.
 	 */
 	public boolean madeProgress()
 	{
-		for (int row : new Range(9)) {
-			for (int col : new Range(9)) {
-				if (hasAnswer(row, col)) {
-					return true;
-				}
-			}
-		}
-		return false;
+		return _madeProgress;
 	}
 	
 	/*
@@ -181,17 +190,24 @@ public class Solver {
 	 */
 	public void step()
 	{
-		sieve();
+		_madeProgress = false;
+		// build up the answer array.  Start with the sieve
+		Set<Answer> answers = sieve();
+		// add in the comb
+		answers.addAll(comb());
+		
+		
+		// if answers isn't empty, we've made progress
+		if (! answers.isEmpty()) {
+			_madeProgress = true;
+			fillAnswers(answers);
+		}
 	}
 	
-	public void fillAnswers()
+	void fillAnswers(Set<Answer> answers)
 	{
-		for (int row : new Range(9)) {
-			for (int col : new Range(9)) {
-				if (hasAnswer(row, col)) {
-					puzzle.setSquare(row, col, getAnswer(row, col));
-				}
-			}
+		for (Answer a : answers) {
+			puzzle.setSquare(a.row, a.col, a.val);
 		}
 	}
 	
@@ -202,12 +218,11 @@ public class Solver {
 		while (true) {
 			solveTries++;
 			step();
-			if (!madeProgress()) {
-				throw new CantSolveException("Sorry!!!");
-			}
-			fillAnswers();
 			if (puzzle.isSolved()) {
 				break;
+			}
+			if (!madeProgress()) {
+				throw new CantSolveException("Sorry!!!");
 			}
 		}
 	}
