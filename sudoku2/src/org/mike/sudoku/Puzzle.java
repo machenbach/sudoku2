@@ -15,7 +15,7 @@ public class Puzzle {
 	
 	public int getSquare(int row, int col)
 	{
-		return board[row][col];
+		return board[row][col] == null ? 0 : board[row][col];
 	}
 	
 	public boolean isFilled(int row, int col) {
