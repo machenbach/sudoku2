@@ -18,19 +18,19 @@ public class Loc {
 		return "(" + row + ", " + col +")";
 	}
 	
-	public static Loc[] rowRange(int col) {
+	public static Loc[] rowRange(int row) {
 		Loc[] range = new Loc[9];
 		int ndx = 0;
-		for (int row : new Range(9)) {
+		for (int col : new Range(9)) {
 			range[ndx++] = new Loc(row, col);
 		}
 		return range;
 	}
 	
-	public static Loc[] colRange(int row) {
+	public static Loc[] colRange(int col) {
 		Loc[] range = new Loc[9];
 		int ndx = 0;
-		for (int col : new Range(9)) {
+		for (int row : new Range(9)) {
 			range[ndx++] = new Loc(row, col);
 		}
 		return range;
