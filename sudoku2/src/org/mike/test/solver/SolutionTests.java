@@ -1,16 +1,29 @@
 package org.mike.test.solver;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
+import org.mike.sudoku.CantSolveException;
 import org.mike.sudoku.Puzzle;
 import org.mike.sudoku.Solver;
 
 public class SolutionTests {
 
+	@Rule
+	public TestRule watcher = new TestWatcher() {
+	   protected void starting(Description description) {
+	      System.out.println("Starting test: " + description.getMethodName());
+	   }
+	};	
+	
 	@Before
 	public void setUp() throws Exception {
 	}
@@ -37,6 +50,7 @@ public class SolutionTests {
 		puzzle.setSquare(2, 7, 4);
 		puzzle.setSquare(1, 0, 3);
 		puzzle.setSquare(1, 1, 5);
+		puzzle.clearSquare(1, 2);
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);

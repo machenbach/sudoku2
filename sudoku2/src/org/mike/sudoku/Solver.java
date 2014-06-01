@@ -151,35 +151,42 @@ public class Solver {
 		for (int r : new Range(9)) {
 			for (int c : new Range(9)) {
 				if (possible[r][c] != null) {
-					// initialize to all possible values
-					Set<Integer> cmb = new HashSet<Integer>();
 					
-					// union all possible row elements (except this row)
+					// This checks to see if a column has an answer
+					Set<Integer> cmb = Sets.copy(possible[r][c]);
 					for (int prow : new Range(9)) {
 						if (prow != r && possible[prow][c] != null) {
-							cmb.addAll(possible[prow][c]);
+							cmb.removeAll(possible[prow][c]);
 						}
 					}
+					// if this is the only answer for a column, we're done
+					if (cmb.size() == 1) {
+						answers.add(new Solution(r,c,Sets.elem(cmb)));
+					}
 					
-					// union all possible column elements, except this col
+					// try the row
+					cmb = Sets.copy(possible[r][c]);
 					for (int pcol : new Range(9)) {
 						if (pcol != c && possible[r][pcol] != null) {
-							cmb.addAll(possible[r][pcol]);
+							cmb.removeAll(possible[r][pcol]);
 						}
 					}
+					if (cmb.size() == 1) {
+						answers.add(new Solution(r,c,Sets.elem(cmb)));
+					}
 					
-					// finally, union everything in the box, except this square
+					// finally, finally, see if there's anything in the box
+					cmb = Sets.copy(possible[r][c]);
 					Box b = Box.boxAt(r, c);
 					for (int prow : b.rows()) {
 						for (int pcol : b.cols()) {
 							if (prow != r && pcol != c && possible[prow][pcol] != null) {
-								cmb.addAll(possible[prow][pcol]);
+								cmb.removeAll(possible[prow][pcol]);
 							}
 						}
 					}
-					Set<Integer> rem = Sets.diff(possible[r][c], cmb);
-					if (rem.size() == 1) {
-						answers.add(new Solution(r,c,Sets.elem(rem)));
+					if (cmb.size() == 1) {
+						answers.add(new Solution(r,c,Sets.elem(cmb)));
 					}
 				}
 			}
@@ -349,6 +356,7 @@ public class Solver {
 	 * Internal solver step.  This is designed to be recursive
 	 */
 	boolean step(Set<Integer>[][] possible) {
+		boolean ret = false;
 		// build up the answer array.  Start with the sieve
 		Set<Solution> answers = sieve(possible);
 		// add in the comb
@@ -361,12 +369,12 @@ public class Solver {
 		}
 		
 		// The easy things didn't work, so let's try combos
-		boolean ret = false;
 		for (Set<Integer>[][] p : allCombos(possible)) {
-			ret = ret || step(p);
+			boolean b = step(p);
+			ret = ret || b;
 		}
 
-		// if we fall through, no progress made
+		// return what progress we made
 		return ret;
 	}
 	

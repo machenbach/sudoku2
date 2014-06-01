@@ -7,6 +7,18 @@ import java.io.StringReader;
 import org.mike.util.Range;
 
 public class Puzzle {
+	
+	public static Puzzle testBoard() {
+		Puzzle p = new Puzzle();
+		for (int r : new Range(9)) {
+			for (int c : new Range(9)) {
+				p.setSquare(r, c, 0);
+			}
+		}
+		return p;
+	}
+	
+	
 	Integer [][] board = new Integer[9][9];
 	
 	public void setSquare (int row, int col, int val) {
@@ -16,6 +28,10 @@ public class Puzzle {
 	public int getSquare(int row, int col)
 	{
 		return board[row][col] == null ? 0 : board[row][col];
+	}
+	
+	public void clearSquare(int row, int col) {
+		board[row][col] = null;
 	}
 	
 	public boolean isFilled(int row, int col) {
