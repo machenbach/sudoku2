@@ -3,7 +3,10 @@ package org.mike.sudoku;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.HashMap;
 
+import org.mike.util.Box;
+import org.mike.util.Loc;
 import org.mike.util.Range;
 
 public class Puzzle {
@@ -113,6 +116,55 @@ public class Puzzle {
 		return sb.toString();
 	}
 	
+	class Histo<E> extends HashMap<E, Integer> {
+		public Histo() {
+			super();
+		}
+		
+		public void addElem(E elem) {
+			Integer n = get(elem);
+			if (n == null) {
+				n = 0;
+			}
+			put(elem, n+1);
+		}
+	}
+	
+	boolean checkRange(Loc[] range) {
+		// we are going to histogram the range.
+		Histo<Integer> h = new Histo<Integer>();
+		for (Loc l : range) {
+			if (board[l.row][l.col] != null) {
+				h.addElem(board[l.row][l.col]);
+			}
+		}
+		// if any element has more than 1 entry, it's bad
+		for (int i : h.values()) {
+			if (i > 1) {
+				return false;
+			}
+		}
+		return true;
+	}
+	public boolean checkPuzzle() {
+		// first, check the columns
+		for (int c : new Range(9)) {
+			if (! checkRange(Loc.colRange(c))) {
+				return false;
+			}
+		}
+		for (int r : new Range(9)) {
+			if (! checkRange(Loc.rowRange(r))) {
+				return false;
+			}
+		}
+		for (int b : new Range(9)) {
+			if (! checkRange(Loc.boxRange(new Box(b)))) {
+				return false;
+			}
+		}
+		return true;
+	}
 	
 
 }

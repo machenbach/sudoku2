@@ -29,26 +29,28 @@ public class FullPuzzles {
 
 	boolean solvePuzzle (String board) {
 		Puzzle puzzle = new Puzzle();
+		boolean ret;
 		try {
 			puzzle.readBoard(board);
 		} catch (IOException e) {
 			fail(e.getMessage());
 		}
 		Solver solver = new Solver(puzzle);
-		int stepTry = 0;
 		while (true) {
 			solver.step();
 			if (puzzle.isSolved()) {
-				return true;
+				ret = true;
+				break;
 			}
 			if (!solver.madeProgress()) {
-				if (stepTry++ > 3) {
-					puzzle.printBoard();
-					solver.printSolverInfo();
-					return false;
-				}
+				ret = false;
+				break;
 			}
 		}
+		puzzle.printBoard();
+		System.out.println(puzzle.checkPuzzle() ? "Puzzle is OK" : "Puzzle is bad");
+		solver.printSolverInfo();
+		return ret;
 	}
 	
 	
