@@ -6,11 +6,22 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.mike.sudoku.Puzzle;
 import org.mike.sudoku.Solver;
 
 public class FullPuzzles {
+	@Rule
+	public TestRule watcher = new TestWatcher() {
+	   protected void starting(Description description) {
+	      System.out.println("Starting test: " + description.getMethodName());
+	   }
+	};	
+	
 
 	@Before
 	public void setUp() throws Exception {
@@ -24,15 +35,18 @@ public class FullPuzzles {
 			fail(e.getMessage());
 		}
 		Solver solver = new Solver(puzzle);
+		int stepTry = 0;
 		while (true) {
 			solver.step();
-			if (!solver.madeProgress()) {
-				puzzle.printBoard();
-				solver.printSolverInfo();
-				return false;
-			}
 			if (puzzle.isSolved()) {
 				return true;
+			}
+			if (!solver.madeProgress()) {
+				if (stepTry++ > 3) {
+					puzzle.printBoard();
+					solver.printSolverInfo();
+					return false;
+				}
 			}
 		}
 	}
