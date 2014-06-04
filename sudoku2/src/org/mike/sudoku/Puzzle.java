@@ -3,11 +3,12 @@ package org.mike.sudoku;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.HashMap;
 
 import org.mike.util.Box;
+import org.mike.util.Histo;
 import org.mike.util.Loc;
 import org.mike.util.Range;
+import org.mike.util.Solution;
 
 public class Puzzle {
 	
@@ -116,20 +117,6 @@ public class Puzzle {
 		return sb.toString();
 	}
 	
-	class Histo<E> extends HashMap<E, Integer> {
-		public Histo() {
-			super();
-		}
-		
-		public void addElem(E elem) {
-			Integer n = get(elem);
-			if (n == null) {
-				n = 0;
-			}
-			put(elem, n+1);
-		}
-	}
-	
 	boolean checkRange(Loc[] range) {
 		// we are going to histogram the range.
 		Histo<Integer> h = new Histo<Integer>();
@@ -146,6 +133,8 @@ public class Puzzle {
 		}
 		return true;
 	}
+	
+	
 	public boolean checkPuzzle() {
 		// first, check the columns
 		for (int c : new Range(9)) {
@@ -165,6 +154,7 @@ public class Puzzle {
 		}
 		return true;
 	}
+	
 	
 
 }

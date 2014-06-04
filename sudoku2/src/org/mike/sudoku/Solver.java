@@ -11,6 +11,7 @@ import org.mike.util.Box;
 import org.mike.util.Loc;
 import org.mike.util.Range;
 import org.mike.util.Sets;
+import org.mike.util.Solution;
 
 /*
  * Starting work on a new solver, that I hope is a little simpler, and better.
@@ -67,19 +68,6 @@ public class Solver {
 		return new HashSet<Integer>(Range.rangeList(1, 10));
 	}
 	
-	// inner class for returning a list of solutions
-	class Solution extends Loc {
-		public int val;
-		
-		public Solution(int r, int c, int v) {
-			super(r,c);
-			val = v;
-		}
-		
-		public String toString() {
-			return "(" + row + ", " + col + ", " + val +")";
-		}
-	}
 	
 	/*
 	 * Create the base possible array from the puzzle.  This is the start of each
@@ -381,7 +369,12 @@ public class Solver {
 	void fillAnswers(Set<Solution> answers)
 	{
 		for (Solution a : answers) {
-			puzzle.setSquare(a.row, a.col, a.val);
+			if (!puzzle.isFilled(a.row, a.col)) {
+				puzzle.setSquare(a.row, a.col, a.val);
+				if (! puzzle.checkPuzzle()) {
+					puzzle.clearSquare(a.row, a.col);
+				}
+			}
 		}
 	}
 	
