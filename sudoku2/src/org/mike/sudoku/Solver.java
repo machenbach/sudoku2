@@ -3,8 +3,10 @@ package org.mike.sudoku;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.mike.util.Box;
@@ -68,6 +70,14 @@ public class Solver {
 		return new HashSet<Integer>(Range.rangeList(1, 10));
 	}
 	
+	void removeRange(Set<Integer> pos, Loc[] range)
+	{
+		for (Loc l : range) {
+			if (puzzle.isFilled(l.row, l.col)) {
+				pos.remove(puzzle.getSquare(l.row, l.col));
+			}
+		}
+	}
 	
 	/*
 	 * Create the base possible array from the puzzle.  This is the start of each
@@ -84,28 +94,15 @@ public class Solver {
 					Set<Integer> pos = initialSet();
 					
 					// remove the elements that are known in the row
-					for (int prow : new Range(9)) {
-						if (puzzle.isFilled(prow, c)) {
-							pos.remove(puzzle.getSquare(prow, c));
-						}
-					}
+					removeRange(pos, Loc.rowRange(r));
 					
 					// remove the elements in the column
-					for (int pcol : new Range(9)) {
-						if (puzzle.isFilled(r, pcol)) {
-							pos.remove(puzzle.getSquare(r, pcol));
-						}
-					}
-					
+					removeRange(pos, Loc.colRange(c));
+
 					// finally, remove all the known values in the box
 					Box b = Box.boxAt(r, c);
-					for (int prow : b.rows()) {
-						for (int pcol : b.cols()) {
-							if (puzzle.isFilled(prow, pcol)) {
-								pos.remove(puzzle.getSquare(prow, pcol));
-							}
-						}
-					}
+					removeRange(pos, Loc.boxRange(b));
+
 					// need to possible answers for comb set
 					possible[r][c] = pos;
 				}
@@ -117,8 +114,8 @@ public class Solver {
 	/*
 	 * first apply the sieve.  The sieve is simple:  look for squares with a single possible value
 	 */
-	public Set<Solution> sieve(Set<Integer>[][] possible) {
-		Set<Solution> answers = new HashSet<Solution>();
+	public List<Solution> sieve(Set<Integer>[][] possible) {
+		List<Solution> answers = new ArrayList<Solution>();
 		for (int row : new Range(9)) {
 			for (int col : new Range(9)) {
 				// need to possible answers for comb set
@@ -130,55 +127,83 @@ public class Solver {
 		return answers;
 	}
 	
+	// a tag for the comb that the try failed
+	static final Solution NoSolution = new Solution(-1, -1, -1);
+	
+	// Comb the given range, and return all the solutions
+	List<Solution> combRange(Set<Integer>[][] possible, Loc[] range)
+	{
+		// The tries map keeps track of the all the solutions we try
+		Map<Integer, Solution> tries = new HashMap<Integer, Solution>();
+		// for each element in the range
+		for (Loc cmbLoc : range) {
+			// if we know the solution (possible is null) continue
+			if (possible[cmbLoc.row][cmbLoc.col] == null) {
+				continue;
+			}
+			
+			// We are going to remove all the common elements from the possibles at the given location, except for it's own elements
+			// After that, if there is exactly one set in the range that this one value, then it's a solution
+			Set<Integer> cmb = new HashSet<Integer>();
+			for (Loc l : range) {
+				if (l.row != cmbLoc.row && l.col != cmbLoc.col && possible[l.row][l.col]!= null ) {
+					cmb.addAll(possible[l.row][l.col]);
+				}
+			}
+			// Try set is possible at this r,c minus all the others
+			Set<Integer> trial = Sets.diff(possible[cmbLoc.row][cmbLoc.col], cmb);
+			
+			// If the trail has one element, this may be a solution.
+			// to check:  if this is the first time we've put it in, add as a solution.  If the
+			// number is already there, mark as no solution
+			if (trial.size() == 1) {
+				Integer e = Sets.elem(trial);
+				// if nothing was here, add a trial solution
+				if (tries.get(e) == null) {
+					tries.put(e, new Solution(cmbLoc.row, cmbLoc.col, e));
+				}
+				else {
+					// if we seen this already, mark as no solution
+					tries.put(e, NoSolution);
+				}
+			}
+		}
+
+		
+		List<Solution> answers = new ArrayList<Solution>();
+		// For this range, we now can see if any of the trials succeeded
+		for (Integer i : tries.keySet()) {
+			Solution s = tries.get(i);
+			if (s != NoSolution) {
+				answers.add(s);
+			}
+		}
+		return answers;
+	}
+	
+	
 	/*
 	 * Next is the comb.  We union the other possible answers, and remove them from the current set.
 	 * If there's exactly one left, we have a solution (i.e. this is the only square with this value left
 	 */
-	public Set<Solution> comb(Set<Integer>[][] possible) {
-		Set<Solution> answers = new HashSet<Solution>();
+	public List<Solution> comb(Set<Integer>[][] possible) {
+		List<Solution> answers = new ArrayList<Solution>();
+		
+		// first, comb all the rows
 		for (int r : new Range(9)) {
-			for (int c : new Range(9)) {
-				if (possible[r][c] != null) {
-					
-					// This checks to see if a column has an answer
-					Set<Integer> cmb = Sets.copy(possible[r][c]);
-					for (int prow : new Range(9)) {
-						if (prow != r && possible[prow][c] != null) {
-							cmb.removeAll(possible[prow][c]);
-						}
-					}
-					// if this is the only answer for a column, we're done
-					if (cmb.size() == 1) {
-						answers.add(new Solution(r,c,Sets.elem(cmb)));
-					}
-					
-					// try the row
-					cmb = Sets.copy(possible[r][c]);
-					for (int pcol : new Range(9)) {
-						if (pcol != c && possible[r][pcol] != null) {
-							cmb.removeAll(possible[r][pcol]);
-						}
-					}
-					if (cmb.size() == 1) {
-						answers.add(new Solution(r,c,Sets.elem(cmb)));
-					}
-					
-					// finally, finally, see if there's anything in the box
-					cmb = Sets.copy(possible[r][c]);
-					Box b = Box.boxAt(r, c);
-					for (int prow : b.rows()) {
-						for (int pcol : b.cols()) {
-							if (prow != r && pcol != c && possible[prow][pcol] != null) {
-								cmb.removeAll(possible[prow][pcol]);
-							}
-						}
-					}
-					if (cmb.size() == 1) {
-						answers.add(new Solution(r,c,Sets.elem(cmb)));
-					}
-				}
-			}
+			answers.addAll(combRange(possible, Loc.rowRange(r)));
 		}
+		
+		// now the columns
+		for (int c : new Range(9)) {
+			answers.addAll(combRange(possible, Loc.colRange(c)));
+		}
+		
+		// and finally the boxes
+		for (int b : new Range(9)) {
+			answers.addAll(combRange(possible, Loc.boxRange(new Box(b))));
+		}
+		
 		return answers;
 	}
 	
@@ -346,7 +371,7 @@ public class Solver {
 	boolean step(Set<Integer>[][] possible) {
 		boolean ret = false;
 		// build up the answer array.  Start with the sieve
-		Set<Solution> answers = sieve(possible);
+		List<Solution> answers = sieve(possible);
 		// add in the comb
 		answers.addAll(comb(possible));
 		
@@ -366,7 +391,7 @@ public class Solver {
 		return ret;
 	}
 	
-	void fillAnswers(Set<Solution> answers)
+	void fillAnswers(List<Solution> answers)
 	{
 		for (Solution a : answers) {
 			if (!puzzle.isFilled(a.row, a.col)) {
@@ -374,6 +399,9 @@ public class Solver {
 				if (! puzzle.checkPuzzle()) {
 					puzzle.clearSquare(a.row, a.col);
 				}
+			}
+			else if (puzzle.getSquare(a.row, a.col) != a.val) {
+				throw new DuplicateAnswerException("Duplicate wrong answer");
 			}
 		}
 	}
