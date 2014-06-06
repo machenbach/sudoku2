@@ -46,5 +46,10 @@ public class Loc {
 		}
 		return range;	
 	}
+	
+	// Convenience function
+	public static Loc[] boxRange(int b) {
+		return boxRange(new Box(b));
+	}
 }
 	

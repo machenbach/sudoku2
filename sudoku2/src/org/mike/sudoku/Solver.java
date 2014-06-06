@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mike.util.Box;
+import org.mike.util.Histo;
 import org.mike.util.Loc;
 import org.mike.util.Range;
 import org.mike.util.Sets;
@@ -111,21 +112,64 @@ public class Solver {
 		return possible;
 	}
 	
+	void removeSieved(Set<Integer>[][] possible, int row, int col)
+	{
+		// we have an answer, so remove this from all the ranges in the possible array
+		// assert possible[row][col].size == 1
+		Integer e = Sets.elem(possible[row][col]);
+		
+		// we know the answer at row, col, so null out possible
+		possible[row][col] = null;
+		
+		// reset the rows
+		for (Loc l : Loc.rowRange(row)) {
+			if (possible[l.row][l.col] != null) {
+				possible[l.row][l.col].remove(e);
+			}
+		}
+
+		// reset the columns
+		for (Loc l : Loc.colRange(col)) {
+			if (possible[l.row][l.col] != null) {
+				possible[l.row][l.col].remove(e);
+			}
+		}
+		// and the box
+		for (Loc l : Loc.boxRange(Box.boxAt(row, col))) {
+			if (possible[l.row][l.col] != null) {
+				possible[l.row][l.col].remove(e);
+			}
+		}
+	}
 	/*
-	 * first apply the sieve.  The sieve is simple:  look for squares with a single possible value
+	 * first apply the sieve.  We look for single element possibles, which represent a 
+	 * solution.  By removing them, we create a possible array.  Keep doing it until 
+	 * nothing new happens
 	 */
 	public List<Solution> sieve(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
-		for (int row : new Range(9)) {
-			for (int col : new Range(9)) {
-				// need to possible answers for comb set
-				if (possible[row][col] != null && possible[row][col].size() == 1) {
-					answers.add(new Solution(row,col,Sets.elem(possible[row][col])));
+		boolean foundOne = true;
+		
+		// keep looking for sieved values until we don't find any more
+		while (foundOne) {
+			foundOne = false;
+			for (int row : new Range(9)) {
+				for (int col : new Range(9)) {
+					// need to possible answers for comb set
+					if (possible[row][col] != null && possible[row][col].size() == 1) {
+						foundOne = true;
+						answers.add(new Solution(row,col,Sets.elem(possible[row][col])));
+						removeSieved(possible, row, col);
+					}
 				}
 			}
 		}
 		return answers;
 	}
+	/*
+	 * Next is the comb.  We union the other possible answers within a range, and remove them from the current set.
+	 * If there's exactly one set in the range with one left, we have a solution (i.e. this is the only square with this value left
+	 */
 	
 	// a tag for the comb that the try failed
 	static final Solution NoSolution = new Solution(-1, -1, -1);
@@ -144,20 +188,18 @@ public class Solver {
 			
 			// We are going to remove all the common elements from the possibles at the given location, except for it's own elements
 			// After that, if there is exactly one set in the range that this one value, then it's a solution
-			Set<Integer> cmb = new HashSet<Integer>();
+			Set<Integer> cmb = new HashSet<Integer>(possible[cmbLoc.row][cmbLoc.col]);
 			for (Loc l : range) {
-				if (l.row != cmbLoc.row && l.col != cmbLoc.col && possible[l.row][l.col]!= null ) {
-					cmb.addAll(possible[l.row][l.col]);
+				if (!(l.row == cmbLoc.row && l.col == cmbLoc.col) && possible[l.row][l.col]!= null ) {
+					cmb.removeAll(possible[l.row][l.col]);
 				}
 			}
-			// Try set is possible at this r,c minus all the others
-			Set<Integer> trial = Sets.diff(possible[cmbLoc.row][cmbLoc.col], cmb);
 			
-			// If the trail has one element, this may be a solution.
+			// If the cmb has one element, this may be a solution.
 			// to check:  if this is the first time we've put it in, add as a solution.  If the
 			// number is already there, mark as no solution
-			if (trial.size() == 1) {
-				Integer e = Sets.elem(trial);
+			if (cmb.size() == 1) {
+				Integer e = Sets.elem(cmb);
 				// if nothing was here, add a trial solution
 				if (tries.get(e) == null) {
 					tries.put(e, new Solution(cmbLoc.row, cmbLoc.col, e));
@@ -183,8 +225,7 @@ public class Solver {
 	
 	
 	/*
-	 * Next is the comb.  We union the other possible answers, and remove them from the current set.
-	 * If there's exactly one left, we have a solution (i.e. this is the only square with this value left
+	 * Comb the different ranges, and get the answers
 	 */
 	public List<Solution> comb(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
@@ -201,7 +242,7 @@ public class Solver {
 		
 		// and finally the boxes
 		for (int b : new Range(9)) {
-			answers.addAll(combRange(possible, Loc.boxRange(new Box(b))));
+			answers.addAll(combRange(possible, Loc.boxRange(b)));
 		}
 		
 		return answers;
@@ -212,43 +253,12 @@ public class Solver {
 	 * of times.  For example, if two squares in a column contain the possiblities of 1,2, the 1 and 2 must be in
 	 * those squares.  We can temporarily consider those squares solved, and create new possibilies with them removed
 	 * 
-	 * The first step is to get all the locations in a range with sets equal to a particular count (2, 3 or 4)
+	 * To do this, we will create a histogram of all the possible sets in the range.  If the value of the histogram (how often
+	 * they occur) is the same as the size, we can remove these sets from possibles
 	 */
 	
-	List<Loc> equivs(Set<Integer>[][] possible, Loc[] range, int count) {
-		for (int i : new Range(9)) {
-			int r = range[i].row;
-			int c = range[i].col;
-			// we are comparing the other sets against this one
-			Set<Integer> s = possible[r][c];
-			
-			// if the length of s is equal to count, we have a possible match
-			if (s != null && s.size() == count) {
-				// clear the array, and add this
-				List<Loc> ret = new ArrayList<Loc>();
-				ret.add(range[i]);
-				
-				// Compare this set against all remaining entries
-				for (int j : new Range(i+1, 9)) {
-					Set<Integer> t = possible[range[j].row][range[j].col];
-					// if the set at this point is equal to s, add it's location to ret
-					if (t != null && s.equals(t)) {
-						ret.add(range[j]);
-						// if we have found match.  If we have exactly as
-						// many matches as count, it's a combo
-						if (ret.size() == count){
-							return ret;
-						}
-					}
-				}
-			}
-			
-		}
-		// return an empty list if no equivs
-		return new ArrayList<Loc>();
-	}
 	
-	// make a copy of the possibilities
+	// Utility: make a copy of the possibilities
 	Set<Integer>[][] copyPossible(Set<Integer>[][] possible) {
 		Set<Integer>[][] ret = new Set[9][9];
 		for (int r : new Range(9)) {
@@ -256,47 +266,74 @@ public class Solver {
 				if (possible[r][c] != null) {
 					ret[r][c] = Sets.copy(possible[r][c]);
 				}
+				else {
+					ret[r][c] = null;
+				}
 			}
 		}
 		return ret;
 	}
 	
-	Set<Integer>[][] comboPossible (Set<Integer>[][] possible, Loc[] range, int count) {
-		// see if we have an equivs
-		List<Loc> locs = equivs(possible, range, count);
+	// This creates a new possible array after removing all the combos
+	Set<Integer>[][] comboPossible (Set<Integer>[][] possible, Loc[] range) {
 		
-		// if we didn't get anything, return null
-		if (locs.isEmpty()) {
+		// For a given range, this will produce a new possibles array, with
+		// combos removed.
+		
+		// Save the locations of each of the sets
+		Map<Set<Integer>, List<Loc>> equivs = new HashMap<Set<Integer>, List<Loc>>();
+		for (Loc l : range) {
+			if (possible[l.row][l.col] != null) {
+				List<Loc> locList = equivs.get(possible[l.row][l.col]);
+				if (locList == null) {
+					locList = new ArrayList<Loc>();
+					equivs.put(possible[l.row][l.col], locList);
+				}
+				locList.add(l);
+			}
+		}
+		
+		// we need to see if we found any combos.  Scan the eqivs.  If a set size == loclist size, then
+		// we have a combo.  Note that we found one, and remove the set from range in the new possibilities
+		
+		// create the new possibles.  First, copy the possibles
+		Set<Integer>[][] p = copyPossible(possible);
+		boolean foundone = false;
+		
+		for (Set<Integer> s : equivs.keySet()) {
+			if (s.size() == equivs.get(s).size()) {
+				// note that we found an equiv
+				foundone = true;
+				// remove the equivs from p
+				for (Loc l : range) {
+					if (p[l.row][l.col]!= null) {
+						p[l.row][l.col].removeAll(s);
+					}
+				}
+				
+				// In this possibilites, the locations we just removed are known
+				for (Loc l : equivs.get(s)) {
+					p[l.row][l.col]= null; 
+				}
+				
+			}
+		}
+
+		// If we found one, return it, otherwise return null
+		if (foundone) {
+			return p;
+		}
+		else {
 			return null;
 		}
-		// Other wise, copy the possible. 		
-		Set<Integer>[][] p = copyPossible(possible);
 		
-		// get the set that's the combo
-		Loc setLoc = locs.get(0);
-		Set<Integer> cset = p[setLoc.row][setLoc.col];
-		
-		// set the possibles of this set locations to null (mark it as if it were known)
-		for (Loc l : locs) {
-			p[l.row][l.col] = null; 
-		}
-		
-		// now go through the rest of the range, and remove the combo set from the possibles
-		for (Loc l : range) {
-			if (p[l.row][l.col] != null) {
-				p[l.row][l.col].removeAll(cset);
-			}
-		}
-		
-		// new possibilities with these combos
-		return p;
 	}
 	
 	// now start splitting out the combos.  Row Combos, Col Combos and Box Combos
-	List<Set<Integer>[][]> rowCombos(Set<Integer>[][] possible, int count) {
+	List<Set<Integer>[][]> rowCombos(Set<Integer>[][] possible) {
 		List<Set<Integer>[][]> possibles = new ArrayList();
 		for (int c : new Range(9)) {
-			Set<Integer>[][] s = comboPossible(possible, Loc.rowRange(c), count);
+			Set<Integer>[][] s = comboPossible(possible, Loc.rowRange(c));
 			if (s != null) {
 				possibles.add(s);
 			}
@@ -305,10 +342,10 @@ public class Solver {
 	}
 	
 	// now start splitting out the combos.  Row Combos, Col Combos and Box Combos
-	List<Set<Integer>[][]> colCombos(Set<Integer>[][] possible, int count) {
+	List<Set<Integer>[][]> colCombos(Set<Integer>[][] possible) {
 		List<Set<Integer>[][]> possibles = new ArrayList();
 		for (int r : new Range(9)) {
-			Set<Integer>[][] s = comboPossible(possible, Loc.colRange(r), count);
+			Set<Integer>[][] s = comboPossible(possible, Loc.colRange(r));
 			if (s != null) {
 				possibles.add(s);
 			}
@@ -317,10 +354,10 @@ public class Solver {
 	}
 	
 	// now start splitting out the combos.  Row Combos, Col Combos and Box Combos
-	List<Set<Integer>[][]> boxCombos(Set<Integer>[][] possible, int count) {
+	List<Set<Integer>[][]> boxCombos(Set<Integer>[][] possible) {
 		List<Set<Integer>[][]> possibles = new ArrayList();
 		for (int b : new Range(9)) {
-			Set<Integer>[][] s = comboPossible(possible, Loc.boxRange(new Box(b)), count);
+			Set<Integer>[][] s = comboPossible(possible, Loc.boxRange(b));
 			if (s != null) {
 				possibles.add(s);
 			}
@@ -330,12 +367,9 @@ public class Solver {
 	
 	List<Set<Integer>[][]> allCombos(Set<Integer>[][] possible) {
 		List<Set<Integer>[][]> ret = new ArrayList();
-		// for count 2, 3, 4
-		for (int count : new Range(2,5)) {
-			ret.addAll(rowCombos(possible, count));
-			ret.addAll(colCombos(possible, count));
-			ret.addAll(boxCombos(possible, count));
-		}
+		ret.addAll(rowCombos(possible));
+		ret.addAll(colCombos(possible));
+		ret.addAll(boxCombos(possible));
 		return ret;
 	}
 	
@@ -384,7 +418,7 @@ public class Solver {
 		// The easy things didn't work, so let's try combos
 		for (Set<Integer>[][] p : allCombos(possible)) {
 			boolean b = step(p);
-			ret = ret || b;
+			ret = ret | b;
 		}
 
 		// return what progress we made
@@ -401,7 +435,8 @@ public class Solver {
 				}
 			}
 			else if (puzzle.getSquare(a.row, a.col) != a.val) {
-				throw new DuplicateAnswerException("Duplicate wrong answer");
+				throw new DuplicateAnswerException(String.format("Duplicate wrong answer at %s, %s.  Old val = %s, new val = %s",
+						a.row, a.col, puzzle.getSquare(a.row, a.col), a.val));
 			}
 		}
 	}

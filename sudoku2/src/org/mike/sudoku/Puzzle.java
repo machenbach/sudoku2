@@ -8,7 +8,6 @@ import org.mike.util.Box;
 import org.mike.util.Histo;
 import org.mike.util.Loc;
 import org.mike.util.Range;
-import org.mike.util.Solution;
 
 public class Puzzle {
 	
@@ -16,7 +15,7 @@ public class Puzzle {
 		Puzzle p = new Puzzle();
 		for (int r : new Range(9)) {
 			for (int c : new Range(9)) {
-				p.setSquare(r, c, 0);
+				p.setSquare(r, c, -1);
 			}
 		}
 		return p;
@@ -57,7 +56,7 @@ public class Puzzle {
 	
 	public String printSquare(int row, int col)
 	{
-		if (isFilled(row, col)) {
+		if (isFilled(row, col) && board[row][col] >= 0) {
 			return(Integer.toString(board[row][col]));
 		}
 		else {
@@ -95,6 +94,9 @@ public class Puzzle {
 				int c = boardReader.read();
 				if (Character.isDigit(c)) {
 					board[row][col] = (c - '0');
+				}
+				else {
+					board[row][col] = null;
 				};
 			}
 		}

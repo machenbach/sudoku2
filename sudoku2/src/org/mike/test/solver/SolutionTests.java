@@ -1,7 +1,6 @@
 package org.mike.test.solver;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -11,7 +10,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.mike.sudoku.CantSolveException;
 import org.mike.sudoku.Puzzle;
 import org.mike.sudoku.Solver;
 
@@ -196,7 +194,7 @@ public class SolutionTests {
 	@Test
 	public void MasterPattern1() throws IOException {
 		String bd = "   23   1 4         51";
-		Puzzle puzzle = new Puzzle();
+		Puzzle puzzle = Puzzle.testBoard();
 		puzzle.readBoard(bd);
 		puzzle.setSquare(3, 0, 2);
 		puzzle.setSquare(4, 0, 3);
@@ -205,8 +203,9 @@ public class SolutionTests {
 		Solver solver = new Solver(puzzle);
 		solver.step();
 		solver.printSolverInfo();
+		assertTrue("No Answer", puzzle.isFilled(1, 0));
 		int answer = puzzle.getSquare(1, 0);
-		assertTrue(answer == 1);
+		assertTrue("Wrong Answer", answer == 1);
 	}
 
 	@Test

@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.mike.sudoku.DuplicateAnswerException;
 import org.mike.sudoku.Puzzle;
 import org.mike.sudoku.Solver;
 
@@ -35,9 +36,17 @@ public class FullPuzzles {
 		} catch (IOException e) {
 			fail(e.getMessage());
 		}
+		puzzle.printBoard();
 		Solver solver = new Solver(puzzle);
 		while (true) {
-			solver.step();
+			try {
+				solver.step();
+			}
+			catch (DuplicateAnswerException e) {
+				System.out.println(e.getMessage());
+				ret = false;
+				break;
+			}
 			if (puzzle.isSolved()) {
 				ret = true;
 				break;
