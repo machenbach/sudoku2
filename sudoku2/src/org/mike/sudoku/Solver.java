@@ -409,15 +409,15 @@ public class Solver {
 			if (!puzzle.isFilled(a.row, a.col)) {
 				puzzle.setSquare(a.row, a.col, a.val);
 				if (! puzzle.checkPuzzle()) {
-					// We had a bad answer
-					puzzle.clearSquare(a.row, a.col);
+					// We had a bad answer - fail this try
+					throw new DuplicateAnswerException(String.format("Bad Answer at %s, %s. Val = %s",
+							a.row, a.col, a.val));
 				}
 			}
 			else if (puzzle.getSquare(a.row, a.col) != a.val) {
-//				throw new DuplicateAnswerException(String.format("Duplicate wrong answer at %s, %s.  Old val = %s, new val = %s",
-//						a.row, a.col, puzzle.getSquare(a.row, a.col), a.val));
-				// one of these answers is bad.  Ignore this one, and delete the old one
-				puzzle.clearSquare(a.row, a.col);
+				// another bad answer fail this try
+				throw new DuplicateAnswerException(String.format("Duplicate wrong answer at %s, %s.  Old val = %s, new val = %s",
+						a.row, a.col, puzzle.getSquare(a.row, a.col), a.val));
 			}
 		}
 	}
@@ -428,7 +428,12 @@ public class Solver {
 		solveTries = 0;
 		while (true) {
 			solveTries++;
-			step();
+			try {
+				step();
+			}
+			catch(DuplicateAnswerException e) {
+				throw new CantSolveException("Step failed", e);
+			}
 			if (puzzle.isSolved()) {
 				break;
 			}

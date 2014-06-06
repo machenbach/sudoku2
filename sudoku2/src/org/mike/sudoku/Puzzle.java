@@ -11,16 +11,6 @@ import org.mike.util.Range;
 
 public class Puzzle {
 	
-	public static Puzzle testBoard() {
-		Puzzle p = new Puzzle();
-		for (int r : new Range(9)) {
-			for (int c : new Range(9)) {
-				p.setSquare(r, c, -1);
-			}
-		}
-		return p;
-	}
-	
 	
 	Integer [][] board = new Integer[9][9];
 	

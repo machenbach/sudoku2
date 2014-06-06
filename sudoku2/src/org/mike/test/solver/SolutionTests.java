@@ -194,7 +194,7 @@ public class SolutionTests {
 	@Test
 	public void MasterPattern1() throws IOException {
 		String bd = "   23   1 4         51";
-		Puzzle puzzle = Puzzle.testBoard();
+		Puzzle puzzle = new Puzzle();
 		puzzle.readBoard(bd);
 		puzzle.setSquare(3, 0, 2);
 		puzzle.setSquare(4, 0, 3);

@@ -90,28 +90,37 @@ public class Builder {
 		
 		// outer loop that tries a new show map
 		while (true) {
+			System.out.print("[");
 			buildShow();
 			try {
 				Solver solver = new Solver(toPuzzleString());
 				// inner loop that attempts to solve
-				while (true) {
-					solver.solve();
-					if (toSolutionString().equals(solver.toString())) {
-						// We have a solution, so return
-						solverSolveTries = solver.getSolveTries();
-						return;
-					}
+				solver.solve();
+				if (toSolutionString().equals(solver.toString())) {
+					// We have a solution, so return
+					solverSolveTries = solver.getSolveTries();
+					break;
+				}
+				else {
+					throw new CantSolveException("Bad Solution");
 				}
 			} catch (IOException e) {
 				throw new NoSolutionException("Invalid Puzzle!! shouldn't happen!", e);
 			}
 			catch (CantSolveException e) {
 				solveTries++;
-				if (solveTries > MAX_TRIES *  4) {
+				if (solveTries > MAX_TRIES *  2) {
 					throw new NoSolutionException("Not a solvable puzzle", e);
 				}
+				System.out.println(e.getMessage());
+				Throwable t = e.getCause();
+				if (t != null) {
+					System.out.print(" : " + t.getMessage());
+				}
+				System.out.println("]");
 			}
 		}
+		System.out.println("puzzle]");
 	}
 	
 	
