@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mike.util.Box;
-import org.mike.util.Histo;
 import org.mike.util.Loc;
 import org.mike.util.Range;
 import org.mike.util.Sets;
@@ -274,8 +273,9 @@ public class Solver {
 		return ret;
 	}
 	
-	// This creates a new possible array after removing all the combos
-	Set<Integer>[][] comboPossible (Set<Integer>[][] possible, Loc[] range) {
+	// Create a new possible array for this range, and try getting answers from it.  Note that this possible is only
+	// valid within this range, and I think that's why trying to run a recursive step never worked.
+	List<Solution> tryCombo (Set<Integer>[][] possible, Loc[] range) {
 		
 		// For a given range, this will produce a new possibles array, with
 		// combos removed.
@@ -318,59 +318,36 @@ public class Solver {
 				
 			}
 		}
-
-		// If we found one, return it, otherwise return null
+		
+		// If we found one, we have a new possibles p.  Try getting answers from seive and comb
+		List<Solution> answers = new ArrayList<Solution>();
+		
 		if (foundone) {
-			return p;
+			answers.addAll(sieve(p));
+			if (answers.isEmpty()) {
+				answers.addAll(comb(p));
+			}
 		}
-		else {
-			return null;
+		return answers;
+	}
+	
+	
+	List<Solution> allCombos(Set<Integer>[][] possible) {
+		List<Solution> answers = new ArrayList<Solution>();
+		// add the rows
+		for (int r : new Range(9)) {
+			answers.addAll(tryCombo(possible, Loc.rowRange(r)));
+		}
+		// add the cols
+		for (int c : new Range(9)) {
+			answers.addAll(tryCombo(possible, Loc.colRange(c)));
+		}
+		// add the boxes
+		for (int b : new Range(9)) {
+			answers.addAll(tryCombo(possible, Loc.boxRange(b)));
 		}
 		
-	}
-	
-	// now start splitting out the combos.  Row Combos, Col Combos and Box Combos
-	List<Set<Integer>[][]> rowCombos(Set<Integer>[][] possible) {
-		List<Set<Integer>[][]> possibles = new ArrayList();
-		for (int c : new Range(9)) {
-			Set<Integer>[][] s = comboPossible(possible, Loc.rowRange(c));
-			if (s != null) {
-				possibles.add(s);
-			}
-		}
-		return possibles;
-	}
-	
-	// now start splitting out the combos.  Row Combos, Col Combos and Box Combos
-	List<Set<Integer>[][]> colCombos(Set<Integer>[][] possible) {
-		List<Set<Integer>[][]> possibles = new ArrayList();
-		for (int r : new Range(9)) {
-			Set<Integer>[][] s = comboPossible(possible, Loc.colRange(r));
-			if (s != null) {
-				possibles.add(s);
-			}
-		}
-		return possibles;
-	}
-	
-	// now start splitting out the combos.  Row Combos, Col Combos and Box Combos
-	List<Set<Integer>[][]> boxCombos(Set<Integer>[][] possible) {
-		List<Set<Integer>[][]> possibles = new ArrayList();
-		for (int b : new Range(9)) {
-			Set<Integer>[][] s = comboPossible(possible, Loc.boxRange(b));
-			if (s != null) {
-				possibles.add(s);
-			}
-		}
-		return possibles;
-	}
-	
-	List<Set<Integer>[][]> allCombos(Set<Integer>[][] possible) {
-		List<Set<Integer>[][]> ret = new ArrayList();
-		ret.addAll(rowCombos(possible));
-		ret.addAll(colCombos(possible));
-		ret.addAll(boxCombos(possible));
-		return ret;
+		return answers;
 	}
 	
 	
@@ -403,26 +380,27 @@ public class Solver {
 	 * Internal solver step.  This is designed to be recursive
 	 */
 	boolean step(Set<Integer>[][] possible) {
-		boolean ret = false;
 		// build up the answer array.  Start with the sieve
 		List<Solution> answers = sieve(possible);
-		// add in the comb
-		answers.addAll(comb(possible));
 		
-		// if answers isn't empty, we've made progress
-		if (! answers.isEmpty()) {
-			fillAnswers(answers);
-			return true;
+		// Superstition on my part.  Only try the next phase if the current one did nothing
+		if (answers.isEmpty()) {
+			answers.addAll(comb(possible));
 		}
 		
-		// The easy things didn't work, so let's try combos
-		for (Set<Integer>[][] p : allCombos(possible)) {
-			boolean b = step(p);
-			ret = ret | b;
+		// now look for combos
+		if (answers.isEmpty()) {
+			answers.addAll(allCombos(possible));
 		}
 
-		// return what progress we made
-		return ret;
+		// that's all we have.  If answers is empty, return false
+		if (answers.isEmpty()) {
+			return false;
+		}
+		
+		// otherwise, fill in the answers we have, and return true
+		fillAnswers(answers);
+		return true;
 	}
 	
 	void fillAnswers(List<Solution> answers)
@@ -431,12 +409,15 @@ public class Solver {
 			if (!puzzle.isFilled(a.row, a.col)) {
 				puzzle.setSquare(a.row, a.col, a.val);
 				if (! puzzle.checkPuzzle()) {
+					// We had a bad answer
 					puzzle.clearSquare(a.row, a.col);
 				}
 			}
 			else if (puzzle.getSquare(a.row, a.col) != a.val) {
-				throw new DuplicateAnswerException(String.format("Duplicate wrong answer at %s, %s.  Old val = %s, new val = %s",
-						a.row, a.col, puzzle.getSquare(a.row, a.col), a.val));
+//				throw new DuplicateAnswerException(String.format("Duplicate wrong answer at %s, %s.  Old val = %s, new val = %s",
+//						a.row, a.col, puzzle.getSquare(a.row, a.col), a.val));
+				// one of these answers is bad.  Ignore this one, and delete the old one
+				puzzle.clearSquare(a.row, a.col);
 			}
 		}
 	}
