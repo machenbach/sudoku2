@@ -85,6 +85,7 @@ public class Solver {
 	 * row, column and box.
 	 */
 	Set<Integer>[][] basePossibles(Puzzle puzzle) {
+		@SuppressWarnings("unchecked")
 		Set<Integer>[][] possible = new Set[9][9];
 		
 		for (int r : new Range(9)) {
@@ -111,35 +112,83 @@ public class Solver {
 		return possible;
 	}
 	
-	void removeSieved(Set<Integer>[][] possible, int row, int col)
+	/*
+	 * redoing layout of tries.  First, generalize sieve.
+	 * Sieve a range -- look for one element possible sets that don't conflict.  Store the solution, remove
+	 *               -- from possible
+	 * Sieve rows/cols/boxes --
+	 * 
+	 */
+	
+	void removeSieved(Set<Integer>[][] possible, Solution sol, Loc[] range)
 	{
 		// we have an answer, so remove this from all the ranges in the possible array
 		// assert possible[row][col].size == 1
-		Integer e = Sets.elem(possible[row][col]);
 		
 		// we know the answer at row, col, so null out possible
-		possible[row][col] = null;
+		possible[sol.row][sol.col] = null;
 		
-		// reset the rows
-		for (Loc l : Loc.rowRange(row)) {
+		// reset the range
+		for (Loc l : range) {
 			if (possible[l.row][l.col] != null) {
-				possible[l.row][l.col].remove(e);
-			}
-		}
-
-		// reset the columns
-		for (Loc l : Loc.colRange(col)) {
-			if (possible[l.row][l.col] != null) {
-				possible[l.row][l.col].remove(e);
-			}
-		}
-		// and the box
-		for (Loc l : Loc.boxRange(Box.boxAt(row, col))) {
-			if (possible[l.row][l.col] != null) {
-				possible[l.row][l.col].remove(e);
+				possible[l.row][l.col].remove(sol.val);
 			}
 		}
 	}
+	
+	/*
+	 * sieve the range. scan the range for one element possibles, and not location.
+	 * If the same element has two squares with one element, not it as no solution
+	 */
+
+	// a tag for sieve that the try failed
+	static final Solution NoSolution = new Solution(-1, -1, -1);
+	
+	List<Solution> sieveRange(Set<Integer>[][] possible, Loc[] range) {
+		List<Solution> answers = new ArrayList<Solution>();
+		boolean foundone = false;
+		
+		// loop while we find solutions
+		do {
+			foundone = false;
+			Map<Integer, Solution> tries = new HashMap<Integer, Solution>();
+			// for each in the loc in the range, enter the tries
+			for (Loc l : range) {
+				if (possible[l.row][l.col]!= null && possible[l.row][l.col].size() == 1) {
+					Integer elem = Sets.elem(possible[l.row][l.col]);
+					if (tries.get(elem) == null) {
+						tries.put(elem, new Solution(l.row, l.col, elem));
+					}
+					else {
+						tries.put(elem, NoSolution);
+					}
+				}
+			}
+			
+			List<Solution> sols = new ArrayList<Solution>();
+			
+			// Now find the ones that are a solution
+			for (Solution s : tries.values()) {
+				if (s != NoSolution) {
+					sols.add(s);
+				}
+			} 
+			// if sols is not empty, note that we found one, and also remove the
+			if (! sols.isEmpty()) {
+				foundone = true;
+				for (Solution sol : sols) {
+					removeSieved(possible, sol, range);
+				}
+				answers.addAll(sols);
+			}
+		} while(foundone);
+
+		return answers;
+	}
+
+	
+	
+	
 	/*
 	 * first apply the sieve.  We look for single element possibles, which represent a 
 	 * solution.  By removing them, we create a possible array.  Keep doing it until 
@@ -147,79 +196,76 @@ public class Solver {
 	 */
 	public List<Solution> sieve(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
-		boolean foundOne = true;
 		
-		// keep looking for sieved values until we don't find any more
-		while (foundOne) {
-			foundOne = false;
-			for (int row : new Range(9)) {
-				for (int col : new Range(9)) {
-					// need to possible answers for comb set
-					if (possible[row][col] != null && possible[row][col].size() == 1) {
-						foundOne = true;
-						answers.add(new Solution(row,col,Sets.elem(possible[row][col])));
-						removeSieved(possible, row, col);
-					}
-				}
-			}
+		for (int r : new Range(9)) {
+			answers.addAll(sieveRange(possible, Loc.rowRange(r)));
 		}
+		
+		for (int c : new Range(9)) {
+			answers.addAll(sieveRange(possible, Loc.colRange(c)));
+		}
+		
+		for (int b : new Range(9)) {
+			answers.addAll(sieveRange(possible, Loc.boxRange(b)));
+		}
+		
+		
 		return answers;
 	}
 	/*
-	 * Next is the comb.  We union the other possible answers within a range, and remove them from the current set.
-	 * If there's exactly one set in the range with one left, we have a solution (i.e. this is the only square with this value left
+	 * Next we produce a combed possible array.  This removes the common elements in range.  We create one for rows, cols and boxes
+	 * and then hand it to sieve
 	 */
 	
-	// a tag for the combo that the try failed
-	static final Solution NoSolution = new Solution(-1, -1, -1);
-	
-	// Comb the given range, and return all the solutions
-	List<Solution> combRange(Set<Integer>[][] possible, Loc[] range)
+	// Comb the given range.  There are two arrays passed in: the first is the original possible, the second is
+	// a new possible we are build up range by range
+	void combRange(Set<Integer>[][] possible, Set<Integer>[][] newPos, Loc[] range)
 	{
-		// The tries map keeps track of the all the solutions we try
-		Map<Integer, Solution> tries = new HashMap<Integer, Solution>();
-		// for each element in the range
+		// create the new 
 		for (Loc cmbLoc : range) {
 			// if we know the solution (possible is null) continue
 			if (possible[cmbLoc.row][cmbLoc.col] == null) {
-				continue;
+				newPos[cmbLoc.row][cmbLoc.col] = null; 
 			}
-			
-			// We are going to remove all the common elements from the possibles at the given location, except for it's own elements
-			// After that, if there is exactly one set in the range that this one value, then it's a solution
-			Set<Integer> cmb = new HashSet<Integer>(possible[cmbLoc.row][cmbLoc.col]);
-			for (Loc l : range) {
-				if (!(l.row == cmbLoc.row && l.col == cmbLoc.col) && possible[l.row][l.col]!= null ) {
-					cmb.removeAll(possible[l.row][l.col]);
+			else {
+				// We are going to remove all the common elements from the possibles at the given location, except for it's own elements
+				// After that, if there is exactly one set in the range that this one value, then it's a solution
+				Set<Integer> cmb = new HashSet<Integer>(possible[cmbLoc.row][cmbLoc.col]);
+				for (Loc l : range) {
+					if (!(l.row == cmbLoc.row && l.col == cmbLoc.col) && possible[l.row][l.col]!= null ) {
+						cmb.removeAll(possible[l.row][l.col]);
+					}
 				}
-			}
-			
-			// If the cmb has one element, this may be a solution.
-			// to check:  if this is the first time we've put it in, add as a solution.  If the
-			// number is already there, mark as no solution
-			if (cmb.size() == 1) {
-				Integer e = Sets.elem(cmb);
-				// if nothing was here, add a trial solution
-				if (tries.get(e) == null) {
-					tries.put(e, new Solution(cmbLoc.row, cmbLoc.col, e));
-				}
-				else {
-					// if we seen this already, mark as no solution
-					tries.put(e, NoSolution);
-				}
+				newPos[cmbLoc.row][cmbLoc.col] = cmb; 
 			}
 		}
-
-		
-		List<Solution> answers = new ArrayList<Solution>();
-		// For this range, we now can see if any of the trials succeeded
-		for (Integer i : tries.keySet()) {
-			Solution s = tries.get(i);
-			if (s != NoSolution) {
-				answers.add(s);
-			}
+	}
+	
+	Set<Integer>[][] rowComb(Set<Integer>[][] possible) {
+		@SuppressWarnings("unchecked")
+		Set<Integer>[][] ret = new Set[9][9];
+		for (int r : new Range(9)) {
+			combRange(possible, ret, Loc.rowRange(r));
 		}
-		return answers;
+		return ret;
+	}
+	
+	Set<Integer>[][] colComb(Set<Integer>[][] possible) {
+		@SuppressWarnings("unchecked")
+		Set<Integer>[][] ret = new Set[9][9];
+		for (int c : new Range(9)) {
+			combRange(possible, ret, Loc.colRange(c));
+		}
+		return ret;
+	}
+	
+	Set<Integer>[][] boxComb(Set<Integer>[][] possible) {
+		@SuppressWarnings("unchecked")
+		Set<Integer>[][] ret = new Set[9][9];
+		for (int b : new Range(9)) {
+			combRange(possible, ret, Loc.boxRange(b));
+		}
+		return ret;
 	}
 	
 	
@@ -229,21 +275,12 @@ public class Solver {
 	public List<Solution> comb(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
 		
-		// first, comb all the rows
-		for (int r : new Range(9)) {
-			answers.addAll(combRange(possible, Loc.rowRange(r)));
-		}
-		
-		// now the columns
-		for (int c : new Range(9)) {
-			answers.addAll(combRange(possible, Loc.colRange(c)));
-		}
-		
-		// and finally the boxes
-		for (int b : new Range(9)) {
-			answers.addAll(combRange(possible, Loc.boxRange(b)));
-		}
-		
+		answers.addAll(sieve(rowComb(possible)));
+				
+		answers.addAll(sieve(colComb(possible)));
+
+		answers.addAll(sieve(boxComb(possible)));
+
 		return answers;
 	}
 	
@@ -259,6 +296,7 @@ public class Solver {
 	
 	// Utility: make a copy of the possibilities
 	Set<Integer>[][] copyPossible(Set<Integer>[][] possible) {
+		@SuppressWarnings("unchecked")
 		Set<Integer>[][] ret = new Set[9][9];
 		for (int r : new Range(9)) {
 			for (int c : new Range(9)) {
@@ -273,8 +311,9 @@ public class Solver {
 		return ret;
 	}
 	
-	// Create a new possible array for this range.  If there is one, we will use this for more answers
-	Set<Integer>[][] tryComboRange (Set<Integer>[][] possible, Loc[] range) {
+	// Build a new possible array for this range.  Like the comb, this will build this array
+	// range by range.  Note, however, that the initial array in here must be a copy of the possible array
+	void tryComboRange (Set<Integer>[][] possible, Set<Integer>[][]  newPos, Loc[] range) {
 		
 		// For a given range, this will produce a new possibles array, with
 		// combos removed.
@@ -295,74 +334,65 @@ public class Solver {
 		// we need to see if we found any combos.  Scan the eqivs.  If a set size == loclist size, then
 		// we have a combo.  Note that we found one, and remove the set from range in the new possibilities
 		
-		// create the new possibles.  First, copy the possibles
-		Set<Integer>[][] p = copyPossible(possible);
-		boolean foundone = false;
 		
 		for (Set<Integer> s : equivs.keySet()) {
 			if (s.size() == equivs.get(s).size()) {
 				// note that we found an equiv
-				foundone = true;
 				// remove the equivs from p
 				for (Loc l : range) {
-					if (p[l.row][l.col]!= null) {
-						p[l.row][l.col].removeAll(s);
+					if (newPos[l.row][l.col]!= null) {
+						newPos[l.row][l.col].removeAll(s);
 					}
 				}
 				
 				// In this possibilites, the locations we just removed are known
 				for (Loc l : equivs.get(s)) {
-					p[l.row][l.col]= null; 
+					newPos[l.row][l.col]= null; 
 				}
 				
 			}
 		}
-		if (foundone) {
-			return p;
-		}
-		else {
-			return null;
-		}
-		
-	}
-
-	// get the solutions by seiving
-	List<Solution> sieveComboRange(Set<Integer>[][] possible, Loc[] range) {
-		// If we found one, we have a new possibles p.  Try getting answers from sieve and comb
-		List<Solution> answers = new ArrayList<Solution>();
-		Set<Integer>[][] p = tryComboRange(possible, range);
-		if (p != null) {
-			answers.addAll(sieve(p));
-		}
-		return answers;
-
-	}
-	// get the solutions by combing.  Note that this will produce bad answers occasionally
-	List<Solution> combComboRange(Set<Integer>[][] possible, Loc[] range) {
-		// If we found one, we have a new possibles p.  Try getting answers from sieve and comb
-		List<Solution> answers = new ArrayList<Solution>();
-		Set<Integer>[][] p = tryComboRange(possible, range);
-		if (p != null) {
-			answers.addAll(comb(p));
-		}
-		return answers;
-
 	}
 	
+	Set<Integer>[][] rowCombos(Set<Integer>[][] possible) {
+		Set<Integer>[][] ret = copyPossible(possible);
+		
+		for (int r : new Range(9)) {
+			tryComboRange(possible, ret, Loc.rowRange(r));
+		}
+		return ret;
+	}
+
+	Set<Integer>[][] colCombos(Set<Integer>[][] possible) {
+		Set<Integer>[][] ret = copyPossible(possible);
+		
+		for (int c : new Range(9)) {
+			tryComboRange(possible, ret, Loc.colRange(c));
+		}
+		return ret;
+	}
+
+	Set<Integer>[][] boxCombos(Set<Integer>[][] possible) {
+		Set<Integer>[][] ret = copyPossible(possible);
+		
+		for (int b : new Range(9)) {
+			tryComboRange(possible, ret, Loc.boxRange(b));
+		}
+		return ret;
+	}
+
 	List<Solution> sieveAllCombos(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
 		// add the rows
-		for (int r : new Range(9)) {
-			answers.addAll(sieveComboRange(possible, Loc.rowRange(r)));
-		}
-		// add the cols
-		for (int c : new Range(9)) {
-			answers.addAll(sieveComboRange(possible, Loc.colRange(c)));
-		}
-		// add the boxes
-		for (int b : new Range(9)) {
-			answers.addAll(sieveComboRange(possible, Loc.boxRange(b)));
-		}
+		answers.addAll(sieve(rowCombos(possible)));
+		
+		answers.addAll(sieve(colCombos(possible)));
+		
+		answers.addAll(sieve(boxCombos(possible)));
+		
+		answers.addAll(sieve(rowComb(rowCombos(possible))));
+		answers.addAll(sieve(colComb(colCombos(possible))));
+		answers.addAll(sieve(boxComb(boxCombos(possible))));
 		
 		return answers;
 	}
@@ -371,18 +401,10 @@ public class Solver {
 	
 	List<Solution> combAllCombos(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
-		// add the rows
-		for (int r : new Range(9)) {
-			answers.addAll(combComboRange(possible, Loc.rowRange(r)));
-		}
-		// add the cols
-		for (int c : new Range(9)) {
-			answers.addAll(combComboRange(possible, Loc.colRange(c)));
-		}
-		// add the boxes
-		for (int b : new Range(9)) {
-			answers.addAll(combComboRange(possible, Loc.boxRange(b)));
-		}
+		
+		answers.addAll(sieve(rowCombos(rowComb(possible))));
+		answers.addAll(sieve(colCombos(colComb(possible))));
+		answers.addAll(sieve(boxCombos(boxComb(possible))));
 		
 		return answers;
 	}
@@ -486,7 +508,6 @@ public class Solver {
 
 	public void solve() throws CantSolveException {
 		solveDepth++;
-		System.out.println(String.format("Solve Depth: %s", solveDepth));
 		while (true) {
 			solveTries++;
 			try {
