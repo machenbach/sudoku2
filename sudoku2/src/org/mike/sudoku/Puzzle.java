@@ -11,8 +11,19 @@ import org.mike.util.Range;
 
 public class Puzzle {
 	
-	
 	Integer [][] board = new Integer[9][9];
+
+	public Puzzle() {
+		
+	}
+	
+	public Puzzle (Puzzle p) {
+		for (int r : new Range(9)) {
+			for (int c : new Range(9)) {
+				board[r][c] = p.board[r][c];
+			}
+		}
+	}
 	
 	public void setSquare (int row, int col, int val) {
 		board[row][col] = val;

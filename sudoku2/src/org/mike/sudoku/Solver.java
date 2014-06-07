@@ -170,7 +170,7 @@ public class Solver {
 	 * If there's exactly one set in the range with one left, we have a solution (i.e. this is the only square with this value left
 	 */
 	
-	// a tag for the comb that the try failed
+	// a tag for the combo that the try failed
 	static final Solution NoSolution = new Solution(-1, -1, -1);
 	
 	// Comb the given range, and return all the solutions
@@ -273,9 +273,8 @@ public class Solver {
 		return ret;
 	}
 	
-	// Create a new possible array for this range, and try getting answers from it.  Note that this possible is only
-	// valid within this range, and I think that's why trying to run a recursive step never worked.
-	List<Solution> tryCombo (Set<Integer>[][] possible, Loc[] range) {
+	// Create a new possible array for this range.  If there is one, we will use this for more answers
+	Set<Integer>[][] tryComboRange (Set<Integer>[][] possible, Loc[] range) {
 		
 		// For a given range, this will produce a new possibles array, with
 		// combos removed.
@@ -318,33 +317,71 @@ public class Solver {
 				
 			}
 		}
-		
-		// If we found one, we have a new possibles p.  Try getting answers from seive and comb
-		List<Solution> answers = new ArrayList<Solution>();
-		
 		if (foundone) {
+			return p;
+		}
+		else {
+			return null;
+		}
+		
+	}
+
+	// get the solutions by seiving
+	List<Solution> sieveComboRange(Set<Integer>[][] possible, Loc[] range) {
+		// If we found one, we have a new possibles p.  Try getting answers from sieve and comb
+		List<Solution> answers = new ArrayList<Solution>();
+		Set<Integer>[][] p = tryComboRange(possible, range);
+		if (p != null) {
 			answers.addAll(sieve(p));
-			if (answers.isEmpty()) {
-				answers.addAll(comb(p));
-			}
 		}
 		return answers;
+
+	}
+	// get the solutions by combing.  Note that this will produce bad answers occasionally
+	List<Solution> combComboRange(Set<Integer>[][] possible, Loc[] range) {
+		// If we found one, we have a new possibles p.  Try getting answers from sieve and comb
+		List<Solution> answers = new ArrayList<Solution>();
+		Set<Integer>[][] p = tryComboRange(possible, range);
+		if (p != null) {
+			answers.addAll(comb(p));
+		}
+		return answers;
+
 	}
 	
-	
-	List<Solution> allCombos(Set<Integer>[][] possible) {
+	List<Solution> sieveAllCombos(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
 		// add the rows
 		for (int r : new Range(9)) {
-			answers.addAll(tryCombo(possible, Loc.rowRange(r)));
+			answers.addAll(sieveComboRange(possible, Loc.rowRange(r)));
 		}
 		// add the cols
 		for (int c : new Range(9)) {
-			answers.addAll(tryCombo(possible, Loc.colRange(c)));
+			answers.addAll(sieveComboRange(possible, Loc.colRange(c)));
 		}
 		// add the boxes
 		for (int b : new Range(9)) {
-			answers.addAll(tryCombo(possible, Loc.boxRange(b)));
+			answers.addAll(sieveComboRange(possible, Loc.boxRange(b)));
+		}
+		
+		return answers;
+	}
+	
+
+	
+	List<Solution> combAllCombos(Set<Integer>[][] possible) {
+		List<Solution> answers = new ArrayList<Solution>();
+		// add the rows
+		for (int r : new Range(9)) {
+			answers.addAll(combComboRange(possible, Loc.rowRange(r)));
+		}
+		// add the cols
+		for (int c : new Range(9)) {
+			answers.addAll(combComboRange(possible, Loc.colRange(c)));
+		}
+		// add the boxes
+		for (int b : new Range(9)) {
+			answers.addAll(combComboRange(possible, Loc.boxRange(b)));
 		}
 		
 		return answers;
@@ -388,12 +425,34 @@ public class Solver {
 			answers.addAll(comb(possible));
 		}
 		
-		// now look for combos
+		// now look for sieve combos
 		if (answers.isEmpty()) {
-			answers.addAll(allCombos(possible));
+			answers.addAll(sieveAllCombos(possible));
 		}
 
-		// that's all we have.  If answers is empty, return false
+		// Here's where it gets dicey.  combCombos produces some good answers, some bad answers.
+		// We will get the proposed solution list, and try each answer, with a backtrack if this answer leads to a bad solution
+		if (answers.isEmpty()) {
+			List<Solution> trials = combAllCombos(possible);
+			for (Solution s : trials) {
+				// save our current puzzle state
+				Puzzle saved = new Puzzle(puzzle);
+				// apply the current solution
+				try {
+					puzzle.setSquare(s.row, s.col, s.val);
+					// and now recursively solve
+					solve();
+					// puzzle is solved!
+					return true;
+				}
+				catch (CantSolveException e) {
+					// This doesn't work. Roll back and try the next one
+					puzzle = new Puzzle(saved);
+				}
+			}
+		}
+		
+		// we've tried it all
 		if (answers.isEmpty()) {
 			return false;
 		}
@@ -422,10 +481,12 @@ public class Solver {
 		}
 	}
 	
-	int solveTries;
-	
+	int solveTries = 0;
+	int solveDepth = 0;
+
 	public void solve() throws CantSolveException {
-		solveTries = 0;
+		solveDepth++;
+		System.out.println(String.format("Solve Depth: %s", solveDepth));
 		while (true) {
 			solveTries++;
 			try {

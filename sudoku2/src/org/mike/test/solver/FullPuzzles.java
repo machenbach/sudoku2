@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.mike.sudoku.CantSolveException;
 import org.mike.sudoku.DuplicateAnswerException;
 import org.mike.sudoku.Puzzle;
 import org.mike.sudoku.Solver;
@@ -30,7 +31,7 @@ public class FullPuzzles {
 
 	boolean solvePuzzle (String board) {
 		Puzzle puzzle = new Puzzle();
-		boolean ret;
+		boolean ret = true;
 		try {
 			puzzle.readBoard(board);
 		} catch (IOException e) {
@@ -38,25 +39,15 @@ public class FullPuzzles {
 		}
 		puzzle.printBoard();
 		Solver solver = new Solver(puzzle);
-		while (true) {
-			try {
-				solver.step();
-			}
-			catch (DuplicateAnswerException e) {
-				System.out.println(e.getMessage());
-				ret = false;
-				break;
-			}
-			if (puzzle.isSolved()) {
-				ret = true;
-				break;
-			}
-			if (!solver.madeProgress()) {
-				ret = false;
-				break;
-			}
+		try {
+			solver.solve();
+		}
+		catch (CantSolveException e) {
+			System.out.println(e.getMessage());
+			ret = false;
 		}
 		puzzle.printBoard();
+		System.out.println(puzzle.toString());
 		System.out.println(puzzle.checkPuzzle() ? "Puzzle is OK" : "Puzzle is bad");
 		solver.printSolverInfo();
 		return ret;
@@ -94,6 +85,11 @@ public class FullPuzzles {
 		assertTrue(solvePuzzle(b));
 	}
 	
+	@Test
+	public void puzzle6 () {
+		String b  = "     5  75 7 8 3 19      256  29   8    5   37 8 31  9 1   3  4  5 7 1 6 7651   2";
+		assertTrue(solvePuzzle(b));
+	}
 	
 
 }
