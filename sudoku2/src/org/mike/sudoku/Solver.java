@@ -5,8 +5,10 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import org.mike.util.Box;
@@ -24,6 +26,9 @@ import org.mike.util.Solution;
 public class Solver {
 	PrintStream logger;
 	
+	// This is the active queue we are working on
+	Queue<Puzzle> puzzleQueue;
+	
 	// the puzzle we're working on
 	Puzzle puzzle;
 	
@@ -40,6 +45,15 @@ public class Solver {
 
 	public Solver (Puzzle puzzle) {
 		this();
+		this.puzzle = puzzle;
+		puzzleQueue = new LinkedList<Puzzle>();
+		puzzleQueue.add(puzzle);
+	}
+	
+	public Solver (Puzzle puzzle, Queue<Puzzle> puzzleQueue) {
+		this();
+		this.puzzleQueue = puzzleQueue;
+		this.puzzleQueue.add(puzzle);
 		this.puzzle = puzzle;
 	}
 
@@ -186,7 +200,35 @@ public class Solver {
 		return answers;
 	}
 
+	List<Solution> sieveRows(Set<Integer>[][] possible) {
+		List<Solution> answers = new ArrayList<Solution>();
+		
+		for (int r : new Range(9)) {
+			answers.addAll(sieveRange(possible, Loc.rowRange(r)));
+		}
+		
+		return answers;
+	}
 	
+	List<Solution> sieveCols(Set<Integer>[][] possible) {
+		List<Solution> answers = new ArrayList<Solution>();
+		
+		for (int c : new Range(9)) {
+			answers.addAll(sieveRange(possible, Loc.colRange(c)));
+		}
+		
+		return answers;
+	}
+	
+	List<Solution> sieveBoxes(Set<Integer>[][] possible) {
+		List<Solution> answers = new ArrayList<Solution>();
+		
+		for (int b : new Range(9)) {
+			answers.addAll(sieveRange(possible, Loc.boxRange(b)));
+		}
+		
+		return answers;
+	}
 	
 	
 	/*
@@ -197,18 +239,9 @@ public class Solver {
 	public List<Solution> sieve(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
 		
-		for (int r : new Range(9)) {
-			answers.addAll(sieveRange(possible, Loc.rowRange(r)));
-		}
-		
-		for (int c : new Range(9)) {
-			answers.addAll(sieveRange(possible, Loc.colRange(c)));
-		}
-		
-		for (int b : new Range(9)) {
-			answers.addAll(sieveRange(possible, Loc.boxRange(b)));
-		}
-		
+		answers.addAll(sieveRows(possible));
+		answers.addAll(sieveCols(possible));
+		answers.addAll(sieveBoxes(possible));
 		
 		return answers;
 	}
@@ -241,7 +274,7 @@ public class Solver {
 		}
 	}
 	
-	Set<Integer>[][] rowComb(Set<Integer>[][] possible) {
+	Set<Integer>[][] combRows(Set<Integer>[][] possible) {
 		@SuppressWarnings("unchecked")
 		Set<Integer>[][] ret = new Set[9][9];
 		for (int r : new Range(9)) {
@@ -250,7 +283,7 @@ public class Solver {
 		return ret;
 	}
 	
-	Set<Integer>[][] colComb(Set<Integer>[][] possible) {
+	Set<Integer>[][] combCols(Set<Integer>[][] possible) {
 		@SuppressWarnings("unchecked")
 		Set<Integer>[][] ret = new Set[9][9];
 		for (int c : new Range(9)) {
@@ -259,7 +292,7 @@ public class Solver {
 		return ret;
 	}
 	
-	Set<Integer>[][] boxComb(Set<Integer>[][] possible) {
+	Set<Integer>[][] combBoxes(Set<Integer>[][] possible) {
 		@SuppressWarnings("unchecked")
 		Set<Integer>[][] ret = new Set[9][9];
 		for (int b : new Range(9)) {
@@ -275,11 +308,11 @@ public class Solver {
 	public List<Solution> comb(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
 		
-		answers.addAll(sieve(rowComb(possible)));
+		answers.addAll(sieve(combRows(possible)));
 				
-		answers.addAll(sieve(colComb(possible)));
+		answers.addAll(sieve(combCols(possible)));
 
-		answers.addAll(sieve(boxComb(possible)));
+		answers.addAll(sieve(combBoxes(possible)));
 
 		return answers;
 	}
@@ -313,7 +346,7 @@ public class Solver {
 	
 	// Build a new possible array for this range.  Like the comb, this will build this array
 	// range by range.  Note, however, that the initial array in here must be a copy of the possible array
-	void tryComboRange (Set<Integer>[][] possible, Set<Integer>[][]  newPos, Loc[] range) {
+	void comboRange (Set<Integer>[][] possible, Set<Integer>[][]  newPos, Loc[] range) {
 		
 		// For a given range, this will produce a new possibles array, with
 		// combos removed.
@@ -354,29 +387,29 @@ public class Solver {
 		}
 	}
 	
-	Set<Integer>[][] rowCombos(Set<Integer>[][] possible) {
+	Set<Integer>[][] comboRows(Set<Integer>[][] possible) {
 		Set<Integer>[][] ret = copyPossible(possible);
 		
 		for (int r : new Range(9)) {
-			tryComboRange(possible, ret, Loc.rowRange(r));
+			comboRange(possible, ret, Loc.rowRange(r));
 		}
 		return ret;
 	}
 
-	Set<Integer>[][] colCombos(Set<Integer>[][] possible) {
+	Set<Integer>[][] comboCols(Set<Integer>[][] possible) {
 		Set<Integer>[][] ret = copyPossible(possible);
 		
 		for (int c : new Range(9)) {
-			tryComboRange(possible, ret, Loc.colRange(c));
+			comboRange(possible, ret, Loc.colRange(c));
 		}
 		return ret;
 	}
 
-	Set<Integer>[][] boxCombos(Set<Integer>[][] possible) {
+	Set<Integer>[][] comboBoxes(Set<Integer>[][] possible) {
 		Set<Integer>[][] ret = copyPossible(possible);
 		
 		for (int b : new Range(9)) {
-			tryComboRange(possible, ret, Loc.boxRange(b));
+			comboRange(possible, ret, Loc.boxRange(b));
 		}
 		return ret;
 	}
@@ -384,15 +417,9 @@ public class Solver {
 	List<Solution> sieveAllCombos(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
 		// add the rows
-		answers.addAll(sieve(rowCombos(possible)));
-		
-		answers.addAll(sieve(colCombos(possible)));
-		
-		answers.addAll(sieve(boxCombos(possible)));
-		
-		answers.addAll(sieve(rowComb(rowCombos(possible))));
-		answers.addAll(sieve(colComb(colCombos(possible))));
-		answers.addAll(sieve(boxComb(boxCombos(possible))));
+		answers.addAll(sieve(comboRows(possible)));
+		answers.addAll(sieve(comboCols(possible)));
+		answers.addAll(sieve(comboBoxes(possible)));
 		
 		return answers;
 	}
@@ -402,13 +429,73 @@ public class Solver {
 	List<Solution> combAllCombos(Set<Integer>[][] possible) {
 		List<Solution> answers = new ArrayList<Solution>();
 		
-		answers.addAll(sieve(rowCombos(rowComb(possible))));
-		answers.addAll(sieve(colCombos(colComb(possible))));
-		answers.addAll(sieve(boxCombos(boxComb(possible))));
+		answers.addAll(sieve(combRows(comboRows(possible))));
+		answers.addAll(sieve(combCols(comboCols(possible))));
+		answers.addAll(sieve(combBoxes(comboBoxes(possible))));
+		
 		
 		return answers;
 	}
 	
+	/*
+	 * This next section is for making guesses from a possible array.  Scan through, and
+	 * create a solution for every non-null non-empty possible
+	 */
+	List<Solution> getGuesses(Set<Integer>[][] possible) {
+		List<Solution> guesses = new ArrayList<Solution>();
+		// for each element in possible
+		for (int r : new Range(9)) {
+			for (int c : new Range(9)) {
+				if (possible[r][c] != null) {
+					// if we have a possible, create a guess solution for each one
+					for (int s : possible[r][c]) {
+						guesses.add(new Solution(r, c, s));
+					}
+				}
+			}
+		}
+		return guesses;
+	}
+	
+	// Apply the guess to the current puzzle as a new puzzle
+	Puzzle applyGuess(Solution guess) {
+		Puzzle p = new Puzzle(puzzle);
+		p.setSquare(guess.row, guess.col, guess.val);
+		return p;
+	}
+	
+	// Try various levels of guesses
+	void queueGuesses(Set<Integer>[][] possible) {
+		List<Solution> guesses = new ArrayList<Solution>();
+		// start easy.  Generate guesses from combed combos
+		guesses.addAll(getGuesses(comboRows(combRows(possible))));
+		guesses.addAll(getGuesses(comboCols(combCols(possible))));
+		guesses.addAll(getGuesses(comboBoxes(combBoxes(possible))));
+		
+		// If none, try guesses of combs
+		if (guesses.isEmpty()) {
+			guesses.addAll(getGuesses(combRows(possible)));
+			guesses.addAll(getGuesses(combCols(possible)));
+			guesses.addAll(getGuesses(combBoxes(possible)));
+		}
+
+		// If still no luck, guesses of combos
+		if (guesses.isEmpty()) {
+			guesses.addAll(getGuesses(comboRows(possible)));
+			guesses.addAll(getGuesses(comboCols(possible)));
+			guesses.addAll(getGuesses(comboBoxes(possible)));
+		}
+		
+		// And last, try guessing off the original possible
+		if (guesses.isEmpty()) {
+			guesses.addAll(getGuesses(possible));
+		}
+		
+		// Ok, however big the queue is, let's queue the guess
+		for (Solution s : guesses) {
+			puzzleQueue.add(applyGuess(s));
+		}
+	}
 	
 	public boolean isSolved()
 	{
@@ -452,29 +539,15 @@ public class Solver {
 			answers.addAll(sieveAllCombos(possible));
 		}
 
-		// Here's where it gets dicey.  combCombos produces some good answers, some bad answers.
-		// We will get the proposed solution list, and try each answer, with a backtrack if this answer leads to a bad solution
+		// now look for sieve combos
 		if (answers.isEmpty()) {
-			List<Solution> trials = combAllCombos(possible);
-			for (Solution s : trials) {
-				// save our current puzzle state
-				Puzzle saved = new Puzzle(puzzle);
-				// apply the current solution
-				try {
-					puzzle.setSquare(s.row, s.col, s.val);
-					// and now recursively solve
-					solve();
-					// puzzle is solved!
-					return true;
-				}
-				catch (CantSolveException e) {
-					// This doesn't work. Roll back and try the next one
-					puzzle = new Puzzle(saved);
-				}
-			}
+			answers.addAll(combAllCombos(possible));
 		}
+
+		// if we still haven't found anything, let's start guessing.
+		queueGuesses(possible);
 		
-		// we've tried it all
+		// we've tried it all in this go, and queued up some guesses
 		if (answers.isEmpty()) {
 			return false;
 		}
@@ -508,19 +581,27 @@ public class Solver {
 
 	public void solve() throws CantSolveException {
 		solveDepth++;
-		while (true) {
-			solveTries++;
-			try {
-				step();
-			}
-			catch(DuplicateAnswerException e) {
-				throw new CantSolveException("Step failed", e);
-			}
-			if (puzzle.isSolved()) {
-				break;
-			}
-			if (!madeProgress()) {
-				throw new CantSolveException("Sorry!!!");
+		while(!puzzleQueue.isEmpty()) {
+			// get the puzzle to solve
+			puzzle = puzzleQueue.remove();
+			// now keep stepping until we've solved it, or can't continue
+			while (true) {
+				solveTries++;
+				try {
+					step();
+				}
+				catch(DuplicateAnswerException e) {
+					// bad puzzle
+					break;
+				}
+				// we solved it.  Return
+				if (puzzle.isSolved()) {
+					return;
+				}
+				// we didn't solve it, and made no more progress
+				if (!madeProgress()) {
+					break;
+				}
 			}
 		}
 	}
