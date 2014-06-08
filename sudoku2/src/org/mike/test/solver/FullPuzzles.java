@@ -31,7 +31,6 @@ public class FullPuzzles {
 
 	boolean solvePuzzle (String board) {
 		Puzzle puzzle = new Puzzle();
-		boolean ret = true;
 		try {
 			puzzle.readBoard(board);
 		} catch (IOException e) {
@@ -39,18 +38,14 @@ public class FullPuzzles {
 		}
 		puzzle.printBoard();
 		Solver solver = new Solver(puzzle);
-		try {
-			solver.solve();
-		}
-		catch (CantSolveException e) {
-			System.out.println(e.getMessage());
-			ret = false;
-		}
+		puzzle = solver.solve();
 		puzzle.printBoard();
+		System.out.println(
+				String.format("depth: %s, tries: %s, queue: %s", 
+						solver.getSolveDepth(), solver.getSolveTries(), solver.getMaxQueueSize()));
 		System.out.println(puzzle.toString());
 		System.out.println(puzzle.checkPuzzle() ? "Puzzle is OK" : "Puzzle is bad");
-		solver.printSolverInfo();
-		return ret;
+		return puzzle.isSolved();
 	}
 	
 	

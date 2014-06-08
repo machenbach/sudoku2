@@ -9,7 +9,7 @@ import org.mike.util.Histo;
 import org.mike.util.Loc;
 import org.mike.util.Range;
 
-public class Puzzle {
+public class Puzzle implements Comparable<Puzzle>{
 	
 	Integer [][] board = new Integer[9][9];
 
@@ -156,6 +156,25 @@ public class Puzzle {
 			}
 		}
 		return true;
+	}
+
+	// open count returns the number open squares.  It is used to prioritize which puzzle to
+	// try next (i.e. pick the one with the fewest open cells first
+	int openCount()
+	{
+		int cnt = 0;
+		for (int r : new Range(9)) {
+			for (int c : new Range(9)) {
+				if (board[r][c] == null) {
+					cnt++;
+				}
+			}
+		}
+		return cnt;
+	}
+	@Override
+	public int compareTo(Puzzle o) {
+		return Integer.compare(openCount(), o.openCount());
 	}
 	
 	

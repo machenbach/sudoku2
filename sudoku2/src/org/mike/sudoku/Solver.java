@@ -1,14 +1,12 @@
 package org.mike.sudoku;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import org.mike.util.Box;
@@ -24,10 +22,9 @@ import org.mike.util.Solution;
  * Next find out if only one square has an answer remaining (the comb)
  */
 public class Solver {
-	PrintStream logger;
-	
+
 	// This is the active queue we are working on
-	Queue<Puzzle> puzzleQueue;
+	PriorityQueue<Puzzle> puzzleQueue;
 	
 	// the puzzle we're working on
 	Puzzle puzzle;
@@ -39,39 +36,19 @@ public class Solver {
 	
 	public Solver()
 	{
-		logger = System.out;
-		
+		puzzleQueue = new PriorityQueue<Puzzle>();
 	}
 
 	public Solver (Puzzle puzzle) {
 		this();
-		this.puzzle = puzzle;
-		puzzleQueue = new LinkedList<Puzzle>();
 		puzzleQueue.add(puzzle);
-	}
-	
-	public Solver (Puzzle puzzle, Queue<Puzzle> puzzleQueue) {
-		this();
-		this.puzzleQueue = puzzleQueue;
-		this.puzzleQueue.add(puzzle);
-		this.puzzle = puzzle;
-	}
-
-	public Solver(PrintStream logger) 
-	{
-		this.logger = logger;
-	}
-	
-	public Solver(Puzzle puzzle, PrintStream logger)
-	{
-		this(puzzle);
-		this.logger = logger;
 	}
 	
 	public Solver (String puzzleStr) throws IOException {
 		this();
 		puzzle = new Puzzle();
 		puzzle.readBoard(puzzleStr);
+		puzzleQueue.add(puzzle);
 	}
 	
 	
@@ -511,11 +488,20 @@ public class Solver {
 	{
 		return _madeProgress;
 	}
-	
+
+	/*
+	 * Step with initial puzzle.
+	 * This is  only for testing purposes.  It should only be called by solution test.
+	 * It gives us a way to test individual steps with a specific puzzle
+	 */
+	public void step(Puzzle p) {
+		this.puzzle = p;
+		step();
+	}
 	/*
 	 * Solver step. Fill the rows, columns and boxes, then get the choices
 	 */
-	public void step()
+	void step()
 	{
 		// used by the sieve and comb to find solutions
 		Set<Integer>[][] possible = basePossibles(puzzle);
@@ -545,7 +531,9 @@ public class Solver {
 		}
 
 		// if we still haven't found anything, let's start guessing.
-		queueGuesses(possible);
+		if (answers.isEmpty()) {
+			queueGuesses(possible);
+		}
 		
 		// we've tried it all in this go, and queued up some guesses
 		if (answers.isEmpty()) {
@@ -578,10 +566,19 @@ public class Solver {
 	
 	int solveTries = 0;
 	int solveDepth = 0;
+	int maxQueueSize = 0;
+	
+	// how deep are we willing to go before calling it a day
+	static final int QUEUE_CUTOFF = 2048;
 
-	public void solve() throws CantSolveException {
+	public Puzzle solve(){
 		solveDepth++;
 		while(!puzzleQueue.isEmpty()) {
+			maxQueueSize = Math.max(maxQueueSize, puzzleQueue.size());
+			if (puzzleQueue.size() > QUEUE_CUTOFF) {
+				return puzzle;
+			}
+			
 			// get the puzzle to solve
 			puzzle = puzzleQueue.remove();
 			// now keep stepping until we've solved it, or can't continue
@@ -596,7 +593,7 @@ public class Solver {
 				}
 				// we solved it.  Return
 				if (puzzle.isSolved()) {
-					return;
+					return puzzle;
 				}
 				// we didn't solve it, and made no more progress
 				if (!madeProgress()) {
@@ -604,31 +601,24 @@ public class Solver {
 				}
 			}
 		}
+		// return as far as we got
+		return puzzle;
 	}
 	
 	public int getSolveTries() {
 		return solveTries;
 	}
 	
+	public int getSolveDepth() {
+		return solveDepth;
+	}
+	
+	public int getMaxQueueSize() {
+		return maxQueueSize;
+	}
+	
 	public String toString()
 	{
 		return(puzzle.toString());
 	}
-	
-	
-	public void printSolverInfo()
-	{
-	}
-	
-	public void printFlat(Set<Integer>[] ary) 
-	{
-		for (int i : new Range(9)) {
-			logger.println(i + ": " + ary[i]);
-		}
-	}
-
-	public void printArray(Set<Integer>[][] ary)
-	{
-	}
-
 }

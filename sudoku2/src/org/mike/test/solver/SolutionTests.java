@@ -36,7 +36,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(1, 1) == 4);
 		
 	}
@@ -52,7 +52,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(1, 2) == 4);
 		
 	}
@@ -67,7 +67,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(1, 0) == 4);
 		
 	}
@@ -83,7 +83,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(2, 2) == 4);
 	}
 
@@ -98,7 +98,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(2, 2) == 4);
 		
 	}
@@ -112,7 +112,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(0, 0) == 1);
 		
 	}
@@ -131,8 +131,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
-		solver.printSolverInfo();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(2, 5) == 1);
 	}
 
@@ -144,7 +143,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(2,8) == 1);
 	}
 
@@ -158,7 +157,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(2,8) == 1);
 	}
 
@@ -171,8 +170,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
-		solver.printSolverInfo();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(0,0) == 1);
 		assertTrue(puzzle.getSquare(0, 1) == 9);
 	}
@@ -187,7 +185,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(0,0) == 1);
 	}
 
@@ -201,8 +199,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
-		solver.printSolverInfo();
+		solver.step(puzzle);
 		assertTrue("No Answer", puzzle.isFilled(1, 0));
 		int answer = puzzle.getSquare(1, 0);
 		assertTrue("Wrong Answer", answer == 1);
@@ -218,7 +215,7 @@ public class SolutionTests {
 		puzzle.printBoard();
 		
 		Solver solver = new Solver(puzzle);
-		solver.step();
+		solver.step(puzzle);
 		assertTrue(puzzle.getSquare(0,0) == 1);
 	}
 }
