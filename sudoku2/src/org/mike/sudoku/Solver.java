@@ -452,23 +452,8 @@ public class Solver {
 	// were solvable with this, so eliminating the others, which never really seem to do anything
 	void queueGuesses(Set<Integer>[][] possible) {
 		List<Solution> guesses = new ArrayList<Solution>();
-/*
-		// start easy.  Generate guesses from combed combos
-		guesses.addAll(getGuesses(comboRows(combRows(possible))));
-		guesses.addAll(getGuesses(comboCols(combCols(possible))));
-		guesses.addAll(getGuesses(comboBoxes(combBoxes(possible))));
-		guessLevel = 1;
-		
-		// If none, try guesses of combs
-		if (guesses.isEmpty()) {
-			guesses.addAll(getGuesses(combRows(possible)));
-			guesses.addAll(getGuesses(combCols(possible)));
-			guesses.addAll(getGuesses(combBoxes(possible)));
-			guessLevel = 2;
-		}
-*/
 
-		// If still no luck, guesses of combos
+		// try  guesses of combos
 		if (guesses.isEmpty()) {
 			guesses.addAll(getGuesses(comboRows(possible)));
 			guesses.addAll(getGuesses(comboCols(possible)));
@@ -477,7 +462,7 @@ public class Solver {
 		}
 
 
-		// And last, try guessing off the original possible
+		// Try guessing off the original possible
 		if (guesses.isEmpty()) {
 			guesses.addAll(getGuesses(possible));
 			guessLevel = 2;
