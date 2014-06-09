@@ -554,12 +554,19 @@ public class Solver {
 		return true;
 	}
 	
+	// check the ranges r and c are in for issues with the puzzle.  Somewhat faster than
+	// calling check puzzle, since we know the whole puzzle didn't change
+	boolean checkAnswer(Puzzle p, int r, int c) {
+		return puzzle.checkRange(Loc.rowRange(r)) &&
+				puzzle.checkRange(Loc.colRange(c)) &&
+				puzzle.checkRange(Loc.boxRange(Box.boxAt(r, c)));
+	}
 	void fillAnswers(List<Solution> answers)
 	{
 		for (Solution a : answers) {
 			if (!puzzle.isFilled(a.row, a.col)) {
 				puzzle.setSquare(a.row, a.col, a.val);
-				if (! puzzle.checkPuzzle()) {
+				if (! checkAnswer(puzzle, a.row, a.col)) {
 					// We had a bad answer - fail this try
 					throw new DuplicateAnswerException(String.format("Bad Answer at %s, %s. Val = %s",
 							a.row, a.col, a.val));

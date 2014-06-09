@@ -120,7 +120,7 @@ public class Puzzle implements Comparable<Puzzle>{
 		return sb.toString();
 	}
 	
-	boolean checkRange(Loc[] range) {
+	public boolean checkRange(Loc[] range) {
 		// we are going to histogram the range.
 		Histo<Integer> h = new Histo<Integer>();
 		for (Loc l : range) {
