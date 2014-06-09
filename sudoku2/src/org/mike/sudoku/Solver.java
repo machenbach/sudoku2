@@ -42,6 +42,7 @@ public class Solver {
 	public Solver (Puzzle puzzle) {
 		this();
 		puzzleQueue.add(puzzle);
+		coverage = puzzleCoverage(puzzle);
 	}
 	
 	public Solver (String puzzleStr) throws IOException {
@@ -49,6 +50,7 @@ public class Solver {
 		puzzle = new Puzzle();
 		puzzle.readBoard(puzzleStr);
 		puzzleQueue.add(puzzle);
+		coverage = puzzleCoverage(puzzle);
 	}
 	
 	
@@ -441,6 +443,9 @@ public class Solver {
 		return p;
 	}
 	
+	// track how hard the guessing got
+	int guessLevel = 0;
+	
 	// Try various levels of guesses
 	void queueGuesses(Set<Integer>[][] possible) {
 		List<Solution> guesses = new ArrayList<Solution>();
@@ -448,12 +453,14 @@ public class Solver {
 		guesses.addAll(getGuesses(comboRows(combRows(possible))));
 		guesses.addAll(getGuesses(comboCols(combCols(possible))));
 		guesses.addAll(getGuesses(comboBoxes(combBoxes(possible))));
+		guessLevel = 1;
 		
 		// If none, try guesses of combs
 		if (guesses.isEmpty()) {
 			guesses.addAll(getGuesses(combRows(possible)));
 			guesses.addAll(getGuesses(combCols(possible)));
 			guesses.addAll(getGuesses(combBoxes(possible)));
+			guessLevel = 2;
 		}
 
 		// If still no luck, guesses of combos
@@ -461,11 +468,13 @@ public class Solver {
 			guesses.addAll(getGuesses(comboRows(possible)));
 			guesses.addAll(getGuesses(comboCols(possible)));
 			guesses.addAll(getGuesses(comboBoxes(possible)));
+			guessLevel = 3;
 		}
 		
 		// And last, try guessing off the original possible
 		if (guesses.isEmpty()) {
 			guesses.addAll(getGuesses(possible));
+			guessLevel = 4;
 		}
 		
 		// Ok, however big the queue is, let's queue the guess
@@ -564,17 +573,38 @@ public class Solver {
 		}
 	}
 	
+	// Some statistics to report.  Total number tries, total depth, total max queue and initial puzzle coverage
 	int solveTries = 0;
 	int solveDepth = 0;
 	int maxQueueSize = 0;
+	int coverage = 0;
+	
+	int puzzleCoverage(Puzzle p) {
+		int total = 0;
+		for (int r : new Range(9)) { 
+			for (int c : new Range(9)) {
+				if (p.isFilled(r, c)) {
+					total++;
+				}
+			}
+		}
+		return (total * 100) / 81;
+	}
 	
 	// how deep are we willing to go before calling it a day
 	static final int QUEUE_CUTOFF = 2048;
+	static final int DEPTH_CUTOFF = 3;
 
 	public Puzzle solve(){
-		solveDepth++;
 		while(!puzzleQueue.isEmpty()) {
+			// Track some things
+			solveDepth++;
 			maxQueueSize = Math.max(maxQueueSize, puzzleQueue.size());
+			
+			// Some safeguards.  If the depth or queuesize is too big, quit
+			if (solveDepth > DEPTH_CUTOFF) {
+				return puzzle;
+			}
 			if (puzzleQueue.size() > QUEUE_CUTOFF) {
 				return puzzle;
 			}
@@ -615,6 +645,14 @@ public class Solver {
 	
 	public int getMaxQueueSize() {
 		return maxQueueSize;
+	}
+	
+	public int getCoverage() {
+		return coverage;
+	}
+	
+	public int getGuessLevel() {
+		return guessLevel;
 	}
 	
 	public String toString()

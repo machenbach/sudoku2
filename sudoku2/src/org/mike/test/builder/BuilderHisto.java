@@ -67,7 +67,7 @@ public class BuilderHisto {
 				}
 				tryhisto[p.getBuildTries()/BUCKET_SIZE]++;
 	
-				int solveTry = p.getSolverSolveTries();
+				int solveTry = p.getSolverTries();
 				solvetotal += solveTry;
 				if (solvemax < solveTry) {
 					solvemax = solveTry;

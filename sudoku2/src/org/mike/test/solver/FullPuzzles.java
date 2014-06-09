@@ -41,8 +41,9 @@ public class FullPuzzles {
 		puzzle = solver.solve();
 		puzzle.printBoard();
 		System.out.println(
-				String.format("depth: %s, tries: %s, queue: %s", 
-						solver.getSolveDepth(), solver.getSolveTries(), solver.getMaxQueueSize()));
+				String.format("coverage: %s, depth: %s, tries: %s, queue: %s, guess level: %s", 
+						solver.getCoverage(), solver.getSolveDepth(), solver.getSolveTries(), 
+						solver.getMaxQueueSize(), solver.getGuessLevel()));
 		System.out.println(puzzle.toString());
 		System.out.println(puzzle.checkPuzzle() ? "Puzzle is OK" : "Puzzle is bad");
 		return puzzle.isSolved();
@@ -52,39 +53,40 @@ public class FullPuzzles {
 	
 	@Test
 	public void puzzle1 () {
-		String b  = " 3 7 5 8 15  9  2 4         6   8  3 9 6 7 5 5  3   7         8 4  8  39   1 2 4 ";
+		String b  = "  92   1    8 1 3  51    2   31 4     2 9 5     5  6   9    37  4 3 9    7   29  ";
 		assertTrue(solvePuzzle(b));
 	}
 
 	@Test
 	public void puzzle2 () {
-		String b  = "  6  981     8      26    3   9   324       925   1  657   49      2      8      ";
+		String b  = " 8   7 3 54  2  18      6    62 17   5     8   17  3    4      93  8  71 7 1   4 ";
 		assertTrue(solvePuzzle(b));
 	}
 
 	@Test
 	public void puzzle3 () {
-		String b  = "       7 1 5   6 9247  8   5   1 7   8  7  6   2 4   3   4  8373 9   5 2 2       ";
+		String b  = " 9     8   4  3   372     4 5 2 1  62       91  9 6 4 5   2  31   3  5   4     9 ";
 		assertTrue(solvePuzzle(b));
 	}
 
 	@Test
 	public void puzzle4 () {
-		String b  = "     5     7 8 3  9      2 6  29   8        37 8 31  9 1   3  4  5 7 1    65     ";
+		String b  = "1 54  9 7 8  5   1  3  2           92 4 1 6 85           2  1  3   7  9 4 6  92 3";
 		assertTrue(solvePuzzle(b));
 	}
 	
 	@Test
 	public void puzzle5 () {
-		String b  = " 392 17    7      8   6 4   1 85  4  9     5  2  39 6   2 1   4      8    43 862 ";
+		String b  = " 7 3 9  24 6     5 2         31    6  4   1  16   54     9     6     2 15  7 1 4 ";
 		assertTrue(solvePuzzle(b));
 	}
 	
 	@Test
 	public void puzzle6 () {
-		String b  = "     5  75 7 8 3 19      256  29   8    5   37 8 31  9 1   3  4  5 7 1 6 7651   2";
+		String b  = "           46 18 31  25 4   46     5    7    7     32   8 1   4  18 72  2        ";
 		assertTrue(solvePuzzle(b));
 	}
+	
 	
 
 }

@@ -19,7 +19,11 @@ public class Builder {
 	static int MAX_TRIES = 500; 
 	int buildTries = 0;
 	int solveTries = 0;
-	int solverSolveTries = 0;
+	int solverTries = 0;
+	int solverCoverage = 0;
+	int solverGuessLevel = 0;
+	int solverDepth = 0;
+	int solverQueue = 0;
 	
 	// what percent (* 100) of squares to show
 	static int SHOW_DEFAULT = 35;
@@ -97,7 +101,11 @@ public class Builder {
 				Puzzle p = solver.solve();
 				if (toSolutionString().equals(p.toString())) {
 					// We have a solution, so return
-					solverSolveTries = solver.getSolveTries();
+					solverTries = solver.getSolveTries();
+					solverCoverage = solver.getCoverage();
+					solverQueue = solver.getMaxQueueSize();
+					solverDepth = solver.getSolveDepth();
+					solverGuessLevel = solver.getGuessLevel();
 					break;
 				}
 				else {
@@ -111,7 +119,6 @@ public class Builder {
 				if (solveTries > MAX_TRIES *  2) {
 					throw new NoSolutionException("Not a solvable puzzle", e);
 				}
-				Throwable t = e.getCause();
 			}
 		}
 	}
@@ -119,15 +126,10 @@ public class Builder {
 	
 	void buildShow() {
 		// we hide each number at the same probability
-		int[] numRatio = new int[9];
-		for (int i : new Range(9)) {
-			numRatio[i] = showRatio;
-		}
-
 		Random random = new Random();
 		for (int r : new Range(9)) {
 			for (int c : new Range(9)) {
-				show[r][c] = random.nextInt(100) <= numRatio[puzzle[r][c] -1] ? true : false;
+				show[r][c] = random.nextInt(100) <= showRatio ? true : false;
 			}
 		}
 		
@@ -141,8 +143,28 @@ public class Builder {
 		return solveTries;
 	}
 	
-	public int getSolverSolveTries() {
-		return solverSolveTries;
+	public int getSolverTries() {
+		return solverTries;
+	}
+
+
+	public int getSolverCoverage() {
+		return solverCoverage;
+	}
+
+
+	public int getSolverGuessLevel() {
+		return solverGuessLevel;
+	}
+
+
+	public int getSolverDepth() {
+		return solverDepth;
+	}
+
+
+	public int getSolverQueue() {
+		return solverQueue;
 	}
 
 
