@@ -1,5 +1,8 @@
 package org.mike.test.builder;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -61,20 +64,47 @@ public class DifficultyHisto {
 		runTest(Threes.class);
 	}
 
+	int getVal(Integer i) {
+		if (i == null) return 0;
+		return i;
+	}
+	
+	final static String stars = "******************************************************************************";
+	
+	void printHisto(Histo<Integer> histo) {
+		SortedSet<Integer> keys = new TreeSet<Integer>(histo.keySet());
+		int n = Collections.max(keys);
+		for (int i : new Range(n+1)) {
+			System.out.println(String.format("%-2d: %s", i, stars.substring(0, getVal(histo.get(i)))));
+		}
+	}
 	/**
 	 * @param clazz
 	 */
 	public void runTest(Class<? extends PuzzleMask> clazz) {
 		Histo<Difficulty> histo = new Histo<Difficulty>();
+		Map<Difficulty, Histo<Integer>> triesHistos = new HashMap<Difficulty, Histo<Integer>>();
+		
 		for (@SuppressWarnings("unused") int i : new Range(SampleSize)) {
 			Builder b = new Builder(clazz);
 			b.generate();
-			histo.addElem(b.getDifficulty());
+			Difficulty d = b.getDifficulty();
+			// histogram the difficulty
+			histo.addElem(d);
+			
+			// Then within the difficulty, histogram the tries
+			Histo<Integer> t = triesHistos.get(d);
+			if (t == null) {
+				t = new Histo<Integer>();
+				triesHistos.put(d, t);
+			}
+			t.addElem(d.getTries());
 		}
 		
 		SortedSet<Difficulty> keys = new TreeSet<Difficulty>(histo.keySet());
 		for (Difficulty k : keys) {
-			System.out.println(String.format("%s: %d", k, histo.get(k)));
+			System.out.println(String.format("%18s: %d", k, histo.get(k)));
+			printHisto(triesHistos.get(k));
 		}
 	}
 

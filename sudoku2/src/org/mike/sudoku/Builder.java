@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
+import org.mike.sudoku.Solver.Difficulty;
 import org.mike.sudoku.mask.PuzzleMask;
 import org.mike.sudoku.mask.Threes;
 import org.mike.util.R;
@@ -26,7 +27,7 @@ public class Builder {
 	int solverGuessLevel = 0;
 	int solverDepth = 0;
 	int solverQueue = 0;
-	Solver.Difficulty difficulty;
+	Difficulty difficulty = Difficulty.UNSOLVABLE;
 	
 	Class<? extends PuzzleMask> maskClass;
 	

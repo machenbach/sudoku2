@@ -448,8 +448,11 @@ public class Solver {
 	int guessLevel = 0;
 	
 	// Try various levels of guesses
+	// After experimenting, the only thing that produces answers is guesses from Combo Rows.  All real puzzles 
+	// were solvable with this, so eliminating the others, which never really seem to do anything
 	void queueGuesses(Set<Integer>[][] possible) {
 		List<Solution> guesses = new ArrayList<Solution>();
+/*
 		// start easy.  Generate guesses from combed combos
 		guesses.addAll(getGuesses(comboRows(combRows(possible))));
 		guesses.addAll(getGuesses(comboCols(combCols(possible))));
@@ -463,19 +466,21 @@ public class Solver {
 			guesses.addAll(getGuesses(combBoxes(possible)));
 			guessLevel = 2;
 		}
+*/
 
 		// If still no luck, guesses of combos
 		if (guesses.isEmpty()) {
 			guesses.addAll(getGuesses(comboRows(possible)));
 			guesses.addAll(getGuesses(comboCols(possible)));
 			guesses.addAll(getGuesses(comboBoxes(possible)));
-			guessLevel = 3;
+			guessLevel = 1;
 		}
-		
+
+
 		// And last, try guessing off the original possible
 		if (guesses.isEmpty()) {
 			guesses.addAll(getGuesses(possible));
-			guessLevel = 4;
+			guessLevel = 2;
 		}
 		
 		// Ok, however big the queue is, let's queue the guess
@@ -600,8 +605,7 @@ public class Solver {
 	}
 	
 	// how deep are we willing to go before calling it a day
-	static final int QUEUE_CUTOFF = 2048;
-	static final int DEPTH_CUTOFF = 3;
+	static final int DEPTH_CUTOFF = 2;
 
 	public Puzzle solve(){
 		while(!puzzleQueue.isEmpty()) {
@@ -611,9 +615,6 @@ public class Solver {
 			
 			// Some safeguards.  If the depth or queuesize is too big, quit
 			if (solveDepth > DEPTH_CUTOFF) {
-				return puzzle;
-			}
-			if (puzzleQueue.size() > QUEUE_CUTOFF) {
 				return puzzle;
 			}
 			
@@ -672,7 +673,9 @@ public class Solver {
 		return(puzzle.toString());
 	}
 	
-	public class Difficulty implements Comparable<Difficulty> {
+	public static class Difficulty implements Comparable<Difficulty> {
+		
+		public static final Difficulty UNSOLVABLE = new Difficulty(0, 0, 0);
 		int depth;
 		int guess;
 		int tries;
