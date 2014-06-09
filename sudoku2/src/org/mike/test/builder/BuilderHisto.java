@@ -57,7 +57,7 @@ public class BuilderHisto {
 		String solvemsg = "Not a solvable puzzle";
 		for (int i : new Range(NUM_SAMPLES)) {
 			try {
-				Builder p = new Builder(25);
+				Builder p = new Builder();
 				trytotal += p.getBuildTries();
 				if (trymax < p.getBuildTries()) {
 					trymax = p.getBuildTries();

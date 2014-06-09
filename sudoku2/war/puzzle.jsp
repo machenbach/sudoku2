@@ -39,26 +39,19 @@ font-size:30px;
 </head>
 <body>
 <%
-	String level = request.getParameter("level");
-	if (level == null || level.isEmpty()) {
-		level = "35";
-	}
-	int num = Integer.parseInt(level);
 	// brute force this
-	Builder p; 
+	Builder p = null; 
 	int tries = 0;
-	while (true) {
-		try {
-	p = new Builder(num); 
-	break;
-		}
-		catch(NoSolutionException e) {
-	tries++;
-		};
+	try {
+		p = new Builder(); 
 	}
+	catch(NoSolutionException e) {
+	};
 	Random rnd = new Random();
 %>
-
+<% if (p == null) {%>
+puzzle failed, try again
+<% } else { %>
 <table style="width:405px; height:405px; align:center; border:2px solid black; margin-left:auto; margin-right:auto">
 	<% for (int tr : new Range(3)) {%>
 	<tr>
@@ -105,4 +98,5 @@ S: <%= Integer.toString(p.getSolveTries()) %>
 </tr>
 <%} %>
 </table>
+<%} %>
 </body>

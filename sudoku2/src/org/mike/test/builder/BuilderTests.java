@@ -1,6 +1,7 @@
 package org.mike.test.builder;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -56,14 +57,23 @@ public class BuilderTests {
 	}
 	
 	@Test
-	public void testBuilder() throws NoSolutionException
+	public void testBuilder()
 	{
+		boolean noFailure = true;
+		int success = 0;
 		for (int i : new Range(100)) {
-			Builder p = new Builder();
-			puzzle = p.toArray();
-			testColumns();
-			testRows();
-			testBoxes();
+			try {
+				Builder p = new Builder();
+				puzzle = p.toArray();
+				testColumns();
+				testRows();
+				testBoxes();
+				success++;
+			} catch (NoSolutionException e) {
+				noFailure = false;
+				System.out.println(String.format("No Solution at try %d, %d successes", i, success));
+			}
+			assertTrue(noFailure);
 		}
 		
 	}

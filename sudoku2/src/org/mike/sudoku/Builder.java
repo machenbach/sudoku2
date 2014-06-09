@@ -36,9 +36,6 @@ public class Builder {
 	int solverDepth = 0;
 	int solverQueue = 0;
 	
-	// what percent (* 100) of squares to show -- trying a new way
-	static int SHOW_DEFAULT = 35;
-	int showRatio;
 	
 	static final Random random = new Random();
 	
@@ -48,23 +45,61 @@ public class Builder {
 	 * @throws NoSolutionException Could not create a puzzle in maxium try count
 	 */
 	public Builder() throws NoSolutionException {
-		this(SHOW_DEFAULT);
+		
+		// build a new valid solution
+		buildPuzzle();
+
+		// create a new show mask until we have a solvable puzzle
+		do {
+			if (solveTries > MAX_TRIES * 2) {
+				// throw an exception if we've been at it too long
+				throw new NoSolutionException("Too many tries");
+			}
+			buildShow();
+		}
+		while (!isSolvablePuzzle());
 	}
-	
-	
-	public Builder(int showRatio) throws NoSolutionException {
-		// save the show ratio
-		this.showRatio = showRatio;
-		
-		
-		/*
-		 * Build a puzzle. This proceeds as follows:
-		 * There are two main routines: fillbox and fixbox
-		 * fillbox fills a box with random numbers.  We will use this on the first box,
-		 * then try combinations of fixbox for the rest, until we get a valid puzzle.
-		 * If we can't get one in MAX_TRIES tries, give up
-		 * 
-		 */
+
+
+	/**
+	 * validatePuzzle tries to solve the puzzle we just made to show it's good puzzle,
+	 * and collect some statistic
+	 * @throws NoSolutionException
+	 */
+	private boolean isSolvablePuzzle() {
+		// outer loop that tries a new show map
+		try {
+			Solver solver = new Solver(toPuzzleString());
+			// inner loop that attempts to solve
+			Puzzle p = solver.solve();
+			if (toSolutionString().equals(p.toString())) {
+				// We have a solution, so return
+				solverTries = solver.getSolveTries();
+				solverCoverage = solver.getCoverage();
+				solverQueue = solver.getMaxQueueSize();
+				solverDepth = solver.getSolveDepth();
+				solverGuessLevel = solver.getGuessLevel();
+				return true;
+			}
+		} catch (IOException e) {
+		}
+		finally {
+			solveTries++;
+		}
+		return false;
+	}
+
+
+	/**
+	 * Build a puzzle. This proceeds as follows:
+	 * There are two main routines: fillbox and fixbox
+	 * fillbox fills a box with random numbers.  We will use this on the first box,
+	 * then try combinations of fixbox for the rest, until we get a valid puzzle.
+	 * If we can't get one in MAX_TRIES tries, give up
+	 * 
+	 * @throws NoSolutionException
+	 */
+	private void buildPuzzle() throws NoSolutionException {
 		// The basics for this puzzle: box 0, 0
 		puzzle = new Integer[9][9];
 		fillbox(0,0);
@@ -104,39 +139,6 @@ public class Builder {
 				}
 			}
 		}
-		
-		// outer loop that tries a new show map
-		while (true) {
-			buildShow();
-			try {
-				Solver solver = new Solver(toPuzzleString());
-				// inner loop that attempts to solve
-				Puzzle p = solver.solve();
-				if (toSolutionString().equals(p.toString())) {
-					// We have a solution, so return
-					solverTries = solver.getSolveTries();
-					solverCoverage = solver.getCoverage();
-					solverQueue = solver.getMaxQueueSize();
-					solverDepth = solver.getSolveDepth();
-					solverGuessLevel = solver.getGuessLevel();
-					break;
-				}
-				else {
-					throw new CantSolveException("Bad Solution");
-				}
-			} catch (IOException e) {
-				throw new NoSolutionException("Invalid Puzzle!! shouldn't happen!", e);
-			}
-			catch (CantSolveException e) {
-				throw new NoSolutionException("Not a solvable puzzle", e);
-			}
-			finally {
-				solveTries++;
-				if (solveTries > MAX_TRIES *  2) {
-					throw new NoSolutionException("Not a solvable puzzle");
-				}
-			}
-		}
 	}
 	
 	void shuffle(boolean[] ary) {
@@ -150,11 +152,8 @@ public class Builder {
 	}
 	
 	void buildShow() {
-		for (int i : new Range(5)) {
+		for (int i : new Range(9)) {
 			shuffle(show[i]);
-		}
-		for (int i : new Range(4)) {
-			show[8-i] = show[i];
 		}
 	}
 
