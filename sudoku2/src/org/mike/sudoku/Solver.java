@@ -698,15 +698,16 @@ public class Solver {
 			if (depth != o.depth) {
 				return Integer.compare(depth, o.depth);
 			}
-			if (guess != o.guess) {
-				return Integer.compare(guess, o.guess);
-			}
-			return Integer.compare(tries, o.tries);
+			return Integer.compare(guess, o.guess);
 		}
 
 		@Override
 		public int hashCode() {
-			return 37 * depth + 31 * guess + tries;
+			return 37 * depth + 31 * guess;
+		}
+		
+		public int getTries() {
+			return tries;
 		}
 		
 		@Override
