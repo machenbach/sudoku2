@@ -3,27 +3,18 @@ package org.mike.sudoku;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.PriorityQueue;
-import java.util.Random;
 
+import org.mike.sudoku.mask.PuzzleMask;
+import org.mike.sudoku.mask.Threes;
+import org.mike.util.R;
 import org.mike.util.Range;
 
 public class Builder {
 	// this will be the solution of of the puzzle we are building
 	Integer[][] solution;
 	
-	// whether or not to show the square
-	boolean[][] show = {
-			{true, true, true, false, false,false, false, false, false},
-			{true, true, true, false, false,false, false, false, false},
-			{true, true, true, false, false,false, false, false, false},
-			{true, true, true, false, false,false, false, false, false},
-			{true, true, true, false, false,false, false, false, false},
-			{true, true, true, false, false,false, false, false, false},
-			{true, true, true, false, false,false, false, false, false},
-			{true, true, true, false, false,false, false, false, false},
-			{true, true, true, false, false,false, false, false, false}
-	};
-
+	PuzzleMask mask;
+	
 	// Solution retry.  We try to construct a random puzzle.  If an attempt fails, reset and
 	// try again.  Blow up after we hit this limit.  Measurements have shown this is about
 	// twice as many tries as we need
@@ -37,13 +28,18 @@ public class Builder {
 	int solverQueue = 0;
 	Solver.Difficulty difficulty;
 	
+	Class<? extends PuzzleMask> maskClass;
 	
-	static final Random random = new Random();
 	
 	/**
 	 * A the builder of a new sudoku puzzle. 
 	 */
 	public Builder(){
+		maskClass = Threes.class;
+	}
+	
+	public Builder(Class<? extends PuzzleMask> clazz) {
+		maskClass = clazz;
 	}
 
 
@@ -69,10 +65,19 @@ public class Builder {
 			if (solveTries > MAX_TRIES * 2) {
 				return false;
 			}
-			buildShow();
+			mask = getMask();
 		}
 		while (!isSolvablePuzzle());
 		return true;
+	}
+	
+	PuzzleMask getMask() {
+		try {
+			return maskClass.newInstance();
+		} catch (InstantiationException e) {
+		} catch (IllegalAccessException e) {
+		}
+		return new Threes();
 	}
 
 
@@ -157,22 +162,7 @@ public class Builder {
 		}
 	}
 	
-	void shuffle(boolean[] ary) {
-		int n = ary.length;
-		for (int i = 0; i < n; i++) {
-			int j = random.nextInt(9 - i) + i;
-			boolean tmp = ary[i];
-			ary[i] = ary[j];
-			ary[j] = tmp;
-		}
-	}
 	
-	void buildShow() {
-		for (int i : new Range(9)) {
-			shuffle(show[i]);
-		}
-	}
-
 	public int getBuildTries() {
 		return buildTries;
 	}
@@ -250,7 +240,7 @@ public class Builder {
 		
 		public Integer pickVal() {
 			Integer[] vals = toArray(new Integer[0]);
-			return vals[random.nextInt(vals.length)];
+			return vals[R.random().nextInt(vals.length)];
 		}
 		
 	}
@@ -356,7 +346,7 @@ public class Builder {
 	}
 	
 	public String puzzleElement(int row, int column) {
-		return show[row][column] ? puzzleInt(row, column).toString() : "  ";
+		return mask.show(row, column) ? puzzleInt(row, column).toString() : "  ";
 	}
 
 	public String puzzleSolution(int row, int column) {
@@ -389,7 +379,7 @@ public class Builder {
 		StringBuffer sb = new StringBuffer();
 		for (int row : new Range(9)) {
 			for (int col : new Range(9)) {
-				sb.append(show[row][col] ? solution[row][col] : " ");
+				sb.append(mask.show(row, col) ? solution[row][col] : " ");
 			}
 		}
 		return sb.toString();
