@@ -35,6 +35,7 @@ public class Builder {
 	int solverGuessLevel = 0;
 	int solverDepth = 0;
 	int solverQueue = 0;
+	Solver.Difficulty difficulty;
 	
 	
 	static final Random random = new Random();
@@ -93,6 +94,7 @@ public class Builder {
 				solverQueue = solver.getMaxQueueSize();
 				solverDepth = solver.getSolveDepth();
 				solverGuessLevel = solver.getGuessLevel();
+				difficulty = solver.getDifficulty();
 				return true;
 			}
 		} catch (IOException e) {
@@ -201,6 +203,10 @@ public class Builder {
 
 	public int getSolverQueue() {
 		return solverQueue;
+	}
+	
+	public Solver.Difficulty getDifficulty() {
+		return difficulty;
 	}
 
 

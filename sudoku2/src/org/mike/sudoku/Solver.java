@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import org.hamcrest.core.IsInstanceOf;
 import org.mike.util.Box;
 import org.mike.util.Loc;
 import org.mike.util.Range;
@@ -662,8 +663,56 @@ public class Solver {
 		return guessLevel;
 	}
 	
+	public Difficulty getDifficulty() {
+		return new Difficulty(solveDepth, guessLevel, solveTries);
+	}
+	
 	public String toString()
 	{
 		return(puzzle.toString());
+	}
+	
+	public class Difficulty implements Comparable<Difficulty> {
+		int depth;
+		int guess;
+		int tries;
+		
+		public Difficulty(int depth, int guess, int tries) {
+			this.depth = depth;
+			this.guess = guess;
+			this.tries = tries;
+		}
+		
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof Difficulty) {
+				return compareTo((Difficulty)obj) == 0;
+			}
+			return false;
+		}
+
+
+		@Override
+		public int compareTo(Difficulty o) {
+			if (depth != o.depth) {
+				return Integer.compare(depth, o.depth);
+			}
+			if (guess != o.guess) {
+				return Integer.compare(guess, o.guess);
+			}
+			return Integer.compare(tries, o.tries);
+		}
+
+		@Override
+		public int hashCode() {
+			return 37 * depth + 31 * guess + tries;
+		}
+		
+		@Override
+		public String toString() {
+			return String.format("D: %d, G: %d, T: %d", depth, guess, tries);
+		}
+		
 	}
 }
