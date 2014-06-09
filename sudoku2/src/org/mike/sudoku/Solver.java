@@ -595,7 +595,7 @@ public class Solver {
 				}
 			}
 		}
-		return (total * 100) / 81;
+		return total;
 	}
 	
 	// how deep are we willing to go before calling it a day

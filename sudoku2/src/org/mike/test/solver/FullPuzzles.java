@@ -87,6 +87,12 @@ public class FullPuzzles {
 		assertTrue(solvePuzzle(b));
 	}
 	
+	@Test
+	public void puzzle7 () {
+		String b  = "    483   492   7 7      1 1      8 2   9   5 7      3 2      1 8   962   542    ";
+		assertTrue(solvePuzzle(b));
+	}
+	
 	
 
 }

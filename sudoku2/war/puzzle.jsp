@@ -80,7 +80,8 @@ font-size:30px;
 </table>
 <p style="align:center">
 C: <%=Integer.toString(p.getSolverCoverage())%>, T: <%=Integer.toString(p.getSolverTries())%>, 
-D: <%= Integer.toString(p.getSolverDepth()) %>, G: <%= Integer.toString(p.getSolverGuessLevel()) %> 
+D: <%= Integer.toString(p.getSolverDepth()) %>, G: <%= Integer.toString(p.getSolverGuessLevel())%>, 
+S: <%= Integer.toString(p.getSolveTries()) %> 
 </p>
 
 <% for (int i : new Range(40)) { %><br/><% } %> 

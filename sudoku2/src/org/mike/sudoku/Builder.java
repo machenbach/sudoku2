@@ -10,8 +10,19 @@ import org.mike.util.Range;
 public class Builder {
 	// the filled out puzzle
 	Integer[][] puzzle;
+	
 	// whether or not to show the square
-	boolean[][] show = new boolean[9][9];
+	boolean[][] show = {
+			{true, true, true, false, false,false, false, false, false},
+			{true, true, true, false, false,false, false, false, false},
+			{true, true, true, false, false,false, false, false, false},
+			{true, true, true, false, false,false, false, false, false},
+			{true, true, true, false, false,false, false, false, false},
+			{true, true, true, false, false,false, false, false, false},
+			{true, true, true, false, false,false, false, false, false},
+			{true, true, true, false, false,false, false, false, false},
+			{true, true, true, false, false,false, false, false, false}
+	};
 
 	// Solution retry.  We try to construct a random puzzle.  If an attempt fails, reset and
 	// try again.  Blow up after we hit this limit.  Measurements have shown this is about
@@ -25,9 +36,11 @@ public class Builder {
 	int solverDepth = 0;
 	int solverQueue = 0;
 	
-	// what percent (* 100) of squares to show
+	// what percent (* 100) of squares to show -- trying a new way
 	static int SHOW_DEFAULT = 35;
 	int showRatio;
+	
+	static final Random random = new Random();
 	
 	/**
 	 * A new sodoku puzzle.  This will try to create a random puzzle, but if it exceeds the
@@ -115,24 +128,34 @@ public class Builder {
 				throw new NoSolutionException("Invalid Puzzle!! shouldn't happen!", e);
 			}
 			catch (CantSolveException e) {
+				throw new NoSolutionException("Not a solvable puzzle", e);
+			}
+			finally {
 				solveTries++;
 				if (solveTries > MAX_TRIES *  2) {
-					throw new NoSolutionException("Not a solvable puzzle", e);
+					throw new NoSolutionException("Not a solvable puzzle");
 				}
 			}
 		}
 	}
 	
+	void shuffle(boolean[] ary) {
+		int n = ary.length;
+		for (int i = 0; i < n; i++) {
+			int j = random.nextInt(9 - i) + i;
+			boolean tmp = ary[i];
+			ary[i] = ary[j];
+			ary[j] = tmp;
+		}
+	}
 	
 	void buildShow() {
-		// we hide each number at the same probability
-		Random random = new Random();
-		for (int r : new Range(9)) {
-			for (int c : new Range(9)) {
-				show[r][c] = random.nextInt(100) <= showRatio ? true : false;
-			}
+		for (int i : new Range(5)) {
+			shuffle(show[i]);
 		}
-		
+		for (int i : new Range(4)) {
+			show[8-i] = show[i];
+		}
 	}
 
 	public int getBuildTries() {
@@ -207,9 +230,8 @@ public class Builder {
 		}
 		
 		public Integer pickVal() {
-			Random r = new Random();
 			Integer[] vals = toArray(new Integer[0]);
-			return vals[r.nextInt(vals.length)];
+			return vals[random.nextInt(vals.length)];
 		}
 		
 	}
