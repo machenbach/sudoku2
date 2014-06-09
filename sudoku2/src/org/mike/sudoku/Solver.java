@@ -591,6 +591,7 @@ public class Solver {
 	int solveDepth = 0;
 	int maxQueueSize = 0;
 	int coverage = 0;
+	List<Integer> tryList = new ArrayList<Integer>();
 	
 	int puzzleCoverage(Puzzle p) {
 		int total = 0;
@@ -605,12 +606,13 @@ public class Solver {
 	}
 	
 	// how deep are we willing to go before calling it a day
-	static final int DEPTH_CUTOFF = 2;
+	static final int DEPTH_CUTOFF = 3;
 
 	public Puzzle solve(){
 		while(!puzzleQueue.isEmpty()) {
 			// Track some things
 			solveDepth++;
+			int stepTries = 0;
 			maxQueueSize = Math.max(maxQueueSize, puzzleQueue.size());
 			
 			// Some safeguards.  If the depth or queuesize is too big, quit
@@ -623,6 +625,7 @@ public class Solver {
 			// now keep stepping until we've solved it, or can't continue
 			while (true) {
 				solveTries++;
+				stepTries++;
 				try {
 					step();
 				}
@@ -632,6 +635,7 @@ public class Solver {
 				}
 				// we solved it.  Return
 				if (puzzle.isSolved()) {
+					tryList.add(stepTries);
 					return puzzle;
 				}
 				// we didn't solve it, and made no more progress
@@ -639,6 +643,7 @@ public class Solver {
 					break;
 				}
 			}
+			tryList.add(stepTries);
 		}
 		// return as far as we got
 		return puzzle;
@@ -665,7 +670,7 @@ public class Solver {
 	}
 	
 	public Difficulty getDifficulty() {
-		return new Difficulty(solveDepth, guessLevel, solveTries);
+		return new Difficulty(solveDepth, guessLevel, solveTries, tryList);
 	}
 	
 	public String toString()
@@ -679,11 +684,17 @@ public class Solver {
 		int depth;
 		int guess;
 		int tries;
+		List<Integer> tryList;
 		
 		public Difficulty(int depth, int guess, int tries) {
+			this(depth,guess,tries,new ArrayList<Integer>());
+		}
+		
+		public Difficulty(int depth, int guess, int tries, List<Integer> tryList) {
 			this.depth = depth;
 			this.guess = guess;
 			this.tries = tries;
+			this.tryList = tryList;
 		}
 		
 
@@ -715,7 +726,7 @@ public class Solver {
 		
 		@Override
 		public String toString() {
-			return String.format("D: %d, G: %d, T: %d", depth, guess, tries);
+			return String.format("D: %d, G: %d, T: %d, L: %s", depth, guess, tries, tryList);
 		}
 		
 	}

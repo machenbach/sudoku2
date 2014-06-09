@@ -92,6 +92,42 @@ public class FullPuzzles {
 		assertTrue(solvePuzzle(4, b));
 	}
 	
+	@Test
+	public void puzzle8 () {
+		String b  = "        71 7328  482     1   6  9    5     9    5  8   1     353   927 17   3     ";
+		assertTrue(solvePuzzle(1, b));
+	}
+	
+	@Test
+	public void puzzle9 () {
+		String b  = " 8 1   93 9      63 2    5 8  564      8 3      917  4 3    2 97      1  1   9 8 ";
+		assertTrue(solvePuzzle(1, b));
+	}
+	
+	@Test
+	public void puzzle10 () {
+		String b  = " 7      19 35   6    7 95  3  17   2 2     1 6   45  8  76 2    5   78 32      4 ";
+		assertTrue(solvePuzzle(2, b));
+	}
+	
+	@Test
+	public void puzzle11 () {
+		String b  = "    73    9    5 382         9 1 8 56   5   22 1   7         679 2    8   863    ";
+		assertTrue(solvePuzzle(3, b));
+	}
+	
+	@Test
+	public void puzzle12 () {
+		String b  = "1     7 9  51 8 3   8     5 6 34     8 9 1 5     82 6 8     5   4 8 53  7 9     6";
+		assertTrue(solvePuzzle(4, b));
+	}
+	
+	@Test
+	public void puzzle13 () {
+		String b  = "                588  96  21    2  93  36 52  6   1    98  51  4 1     7      4   ";
+		assertTrue(solvePuzzle(2, b));
+	}
+	
 	
 
 }
