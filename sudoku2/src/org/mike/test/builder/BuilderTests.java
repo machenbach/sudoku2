@@ -1,14 +1,13 @@
 package org.mike.test.builder;
 
-import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Test;
 import org.mike.sudoku.Builder;
-import org.mike.sudoku.NoSolutionException;
 import org.mike.util.Range;
 
 public class BuilderTests {
@@ -62,20 +61,21 @@ public class BuilderTests {
 		boolean noFailure = true;
 		int success = 0;
 		for (int i : new Range(100)) {
-			try {
-				Builder p = new Builder();
+			Builder p = new Builder();
+			if (p.generate()) {
 				puzzle = p.toArray();
 				testColumns();
 				testRows();
 				testBoxes();
 				success++;
-			} catch (NoSolutionException e) {
+			}
+			else {
 				noFailure = false;
 				System.out.println(String.format("No Solution at try %d, %d successes", i, success));
 			}
-			assertTrue(noFailure);
 		}
-		
+		System.out.println(String.format("Done:  %d successes", success));
+		assertTrue(noFailure);
 	}
 
 }

@@ -8,8 +8,8 @@ import java.util.Random;
 import org.mike.util.Range;
 
 public class Builder {
-	// the filled out puzzle
-	Integer[][] puzzle;
+	// this will be the solution of of the puzzle we are building
+	Integer[][] solution;
 	
 	// whether or not to show the square
 	boolean[][] show = {
@@ -40,24 +40,38 @@ public class Builder {
 	static final Random random = new Random();
 	
 	/**
-	 * A new sodoku puzzle.  This will try to create a random puzzle, but if it exceeds the
-	 * try limit it will fail
-	 * @throws NoSolutionException Could not create a puzzle in maxium try count
+	 * A the builder of a new sudoku puzzle. 
 	 */
-	public Builder() throws NoSolutionException {
-		
+	public Builder(){
+	}
+
+
+	/**
+	 * Generate the puzzle.  First, build a solution.  Then generate a mask that
+	 * will create the puzzle. 
+	 * Finally, validate the puzzle by solving it.  This will also give us a hint at
+	 * how hard it is.
+	 * 
+	 * @return true if the puzzle has been created, false otherwise
+	 */
+	public boolean generate(){
 		// build a new valid solution
-		buildPuzzle();
+		try {
+			buildSolution();
+		} catch (NoSolutionException e) {
+			// no luck this time, return false
+			return false;
+		}
 
 		// create a new show mask until we have a solvable puzzle
 		do {
 			if (solveTries > MAX_TRIES * 2) {
-				// throw an exception if we've been at it too long
-				throw new NoSolutionException("Too many tries");
+				return false;
 			}
 			buildShow();
 		}
 		while (!isSolvablePuzzle());
+		return true;
 	}
 
 
@@ -91,7 +105,7 @@ public class Builder {
 
 
 	/**
-	 * Build a puzzle. This proceeds as follows:
+	 * Build the solution of a puzzle. This proceeds as follows:
 	 * There are two main routines: fillbox and fixbox
 	 * fillbox fills a box with random numbers.  We will use this on the first box,
 	 * then try combinations of fixbox for the rest, until we get a valid puzzle.
@@ -99,9 +113,9 @@ public class Builder {
 	 * 
 	 * @throws NoSolutionException
 	 */
-	private void buildPuzzle() throws NoSolutionException {
+	private void buildSolution() throws NoSolutionException {
 		// The basics for this puzzle: box 0, 0
-		puzzle = new Integer[9][9];
+		solution = new Integer[9][9];
 		fillbox(0,0);
 		
 		// Now try filling in the other boxes
@@ -125,11 +139,11 @@ public class Builder {
 				buildTries++;
 				
 				// reset the puzzle.  Copy only the box at 0,0
-				Integer[][] oldPuzzle = puzzle;
-				puzzle = new Integer[9][9];
+				Integer[][] oldPuzzle = solution;
+				solution = new Integer[9][9];
 				for (int r : new Range(3)) {
 					for (int c : new Range(3)) {
-						puzzle[r][c] = oldPuzzle[r][c];
+						solution[r][c] = oldPuzzle[r][c];
 					}
 				}
 				
@@ -195,7 +209,7 @@ public class Builder {
 		int cur = 0;
 		for (int r : new Range(3)) {
 			for (int c : new Range(3)) {
-				puzzle[rc(rb,r)][rc(cb,c)] = boxnums[cur++];
+				solution[rc(rb,r)][rc(cb,c)] = boxnums[cur++];
 			}
 		}
 				
@@ -253,10 +267,10 @@ public class Builder {
 			int r = rc(rb, pr);
 			for (int c : new Range(9)) {
 				// for each r/c, check if the puzzle has been set
-				if (puzzle[r][c] != null) {
+				if (solution[r][c] != null) {
 					// if it has, for each column in this box on this row, we remove it as a possible value
 					for (int pc : new Range(3)) {
-						pelems[pr][pc].remove(puzzle[r][c]);
+						pelems[pr][pc].remove(solution[r][c]);
 					}
 				}
 			}
@@ -268,10 +282,10 @@ public class Builder {
 			int c = rc(cb, pc);
 			for (int r : new Range(9)) {
 				// for each r/c, check if the puzzle has been set
-				if (puzzle[r][c] != null) {
+				if (solution[r][c] != null) {
 					// if it has, for each column in this box on this row, we remove it as a possible value
 					for (int pr : new Range(3)) {
-						pelems[pr][pc].remove(puzzle[r][c]);
+						pelems[pr][pc].remove(solution[r][c]);
 					}
 				}
 			}
@@ -309,7 +323,7 @@ public class Builder {
 			Integer val = elem.pickVal();
 			
 			// set this in the puzzle, remove it from needed and the rest of the sets
-			puzzle[elem.getRow()][elem.getColumn()] = val;
+			solution[elem.getRow()][elem.getColumn()] = val;
 			boxNeeds.remove(val);
 			for (PossibleElem e : pqueue) {
 				e.remove(val);
@@ -332,7 +346,7 @@ public class Builder {
 	
 
 	public Integer puzzleInt(int row, int column)  {
-		return puzzle[row][column];
+		return solution[row][column];
 	}
 	
 	public String puzzleElement(int row, int column) {
@@ -343,7 +357,7 @@ public class Builder {
 		return puzzleInt(row, column).toString();
 	}
 	public Integer[][] toArray() {
-		return puzzle;
+		return solution;
 	}
 
 	/**
@@ -354,7 +368,7 @@ public class Builder {
 		StringBuffer sb = new StringBuffer();
 		for (int row : new Range(9)) {
 			for (int col : new Range(9)) {
-				sb.append(puzzle[row][col]);
+				sb.append(solution[row][col]);
 			}
 		}
 		return sb.toString();
@@ -369,7 +383,7 @@ public class Builder {
 		StringBuffer sb = new StringBuffer();
 		for (int row : new Range(9)) {
 			for (int col : new Range(9)) {
-				sb.append(show[row][col] ? puzzle[row][col] : " ");
+				sb.append(show[row][col] ? solution[row][col] : " ");
 			}
 		}
 		return sb.toString();

@@ -58,6 +58,9 @@ public class BuilderHisto {
 		for (int i : new Range(NUM_SAMPLES)) {
 			try {
 				Builder p = new Builder();
+				if (!p.generate()) {
+					throw new NoSolutionException();
+				}
 				trytotal += p.getBuildTries();
 				if (trymax < p.getBuildTries()) {
 					trymax = p.getBuildTries();

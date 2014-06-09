@@ -42,15 +42,11 @@ font-size:30px;
 	// brute force this
 	Builder p = null; 
 	int tries = 0;
-	try {
-		p = new Builder(); 
-	}
-	catch(NoSolutionException e) {
-	};
+	p = new Builder(); 
 	Random rnd = new Random();
 %>
-<% if (p == null) {%>
-puzzle failed, try again
+<% if (!p.generate()) {%>
+	<h2>Puzzle failed, try again</h2>
 <% } else { %>
 <table style="width:405px; height:405px; align:center; border:2px solid black; margin-left:auto; margin-right:auto">
 	<% for (int tr : new Range(3)) {%>
