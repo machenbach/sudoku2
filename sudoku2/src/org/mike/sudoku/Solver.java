@@ -47,11 +47,7 @@ public class Solver {
 	}
 	
 	public Solver (String puzzleStr) throws IOException {
-		this();
-		puzzle = new Puzzle();
-		puzzle.readBoard(puzzleStr);
-		puzzleQueue.add(puzzle);
-		coverage = puzzleCoverage(puzzle);
+		this(new Puzzle(puzzleStr));
 	}
 	
 	

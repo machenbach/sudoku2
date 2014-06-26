@@ -25,6 +25,10 @@ public class Puzzle implements Comparable<Puzzle>{
 		}
 	}
 	
+	public Puzzle (String puzzleStr) throws IOException {
+		readBoard(puzzleStr);
+	}
+	
 	public void setSquare (int row, int col, int val) {
 		board[row][col] = val;
 	}
@@ -110,7 +114,7 @@ public class Puzzle implements Comparable<Puzzle>{
 			for (int col = 0; col < 9; col++) {
 				Integer sq = board[row][col];
 				if (sq == null) {
-					sb.append(" ");
+					sb.append("X");
 				}
 				else {
 					sb.append(sq.toString());

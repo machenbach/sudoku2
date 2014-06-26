@@ -10,7 +10,7 @@ import org.mike.test.solver.SolverTest;
 import org.mike.test.util.RangeTest;
 
 @RunWith(Suite.class)
-@SuiteClasses({ PuzzleTest.class, SolverTest.class, SolutionTests.class, BuilderTests.class, RangeTest.class })
+@SuiteClasses({ PuzzleTest.class, SolverTest.class, SolutionTests.class, RangeTest.class })
 public class AllTests {
 
 }

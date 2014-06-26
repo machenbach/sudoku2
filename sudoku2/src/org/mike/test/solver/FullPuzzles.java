@@ -11,8 +11,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.mike.sudoku.CantSolveException;
-import org.mike.sudoku.DuplicateAnswerException;
 import org.mike.sudoku.Puzzle;
 import org.mike.sudoku.Solver;
 

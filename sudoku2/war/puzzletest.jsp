@@ -41,10 +41,9 @@ font-size:30px;
 <%
 	String board = request.getParameter("board");
 	if (board == null) {
-		board = "     5  75 7 8 3 19      256  29   8    5   37 8 31  9 1   3  4  5 7 1 6 7651   2";
+		board = "XXXXX5XX75X7X8X3X19XXXXXX256XX29XXX8XXXX5XXX37X8X31XX9X1XXX3XX4XX5X7X1X6X7651XXX2";
 	}
-	Puzzle p = new Puzzle();
-	p.readBoard(board);
+	Puzzle p = new Puzzle(board);
 %>
 
 <table style="width:405px; height:405px; align:center; border:2px solid black; margin-left:auto; margin-right:auto">
