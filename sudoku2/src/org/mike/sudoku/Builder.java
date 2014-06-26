@@ -380,7 +380,7 @@ public class Builder {
 		StringBuffer sb = new StringBuffer();
 		for (int row : new Range(9)) {
 			for (int col : new Range(9)) {
-				sb.append(mask.show(row, col) ? solution[row][col] : " ");
+				sb.append(mask.show(row, col) ? solution[row][col] : "X");
 			}
 		}
 		return sb.toString();

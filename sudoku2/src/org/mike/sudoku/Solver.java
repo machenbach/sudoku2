@@ -707,6 +707,9 @@ public class Solver {
 		
 		@Override
 		public String toString() {
+			if (UNSOLVABLE.equals(this)) {
+				return("Unsolvable");
+			}
 			return String.format("D: %d, G: %d, T: %d, L: %s", depth, guess, tries, tryList);
 		}
 		
