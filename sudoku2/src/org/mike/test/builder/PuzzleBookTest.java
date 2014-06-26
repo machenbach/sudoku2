@@ -24,6 +24,16 @@ import org.mike.sudoku.mask.Threes;
 import org.mike.util.Range;
 
 public class PuzzleBookTest {
+	public static class PuzzleEntry {
+		public PuzzleEntry (String puzzle, String solution) {
+			this.puzzle = puzzle;
+			this.solution = solution;
+		}
+		
+		public String puzzle;
+		public String solution;
+	}
+	
 	@Rule
 	public TestRule watcher = new TestWatcher() {
 	   protected void starting(Description description) {
@@ -33,21 +43,45 @@ public class PuzzleBookTest {
 	
 	
 	final static int SampleSize = 20;
-	static Map<Integer, List<String>> allPuzzles;
+	static Map<Integer, List<PuzzleEntry>> allPuzzles;
 	
 	@BeforeClass
 	static public void Init() {
-		allPuzzles = new HashMap<Integer, List<String>>();
+		allPuzzles = new HashMap<Integer, List<PuzzleEntry>>();
 		for (int i : new Range(5)) {
-			allPuzzles.put(i, new ArrayList<String>());
+			allPuzzles.put(i, new ArrayList<PuzzleEntry>());
 		}
 		
 	}
+
+	// string for buttons.  args: Puzzle number, hardness, puzzle, solution
+	static String buttonFmt = "<button onclick=\"fillPuzzle('Puzzle %1$d - %2$s', '%3$s')\">\n" +
+			"	%2$s %1$d </button>\n" +
+			"	<button onclick=\"fillPuzzle('Solution %1$d - %2$s', '%4$s')\">" +
+			"	Solution</button>  <br>";
+
+	static String hardness (int i) {
+		switch (i) {
+		case 1:
+			return ("Easy");
+		case 2:
+			return ("Medium");
+		case 3:
+			return ("Hard");
+		case 4:
+			return ("Very Hard");
+		}
+		return("Impossible");
+	}
+	
+
 	@AfterClass
 	static public void Dumpit() {
-		for (int i : new Range(5)) {
-			for (String s : allPuzzles.get(i)) {
-				System.out.println(s);
+		int n = 1;
+		for (int i : new Range(1, 5)) {
+			for (PuzzleEntry e : allPuzzles.get(i)) {
+				String btns = String.format(buttonFmt, n++, hardness(i), e.puzzle, e.solution);
+				System.out.println(btns);
 			}
 		}
 	}
@@ -108,8 +142,7 @@ public class PuzzleBookTest {
 	}
 	
 	void addEntry(Builder b) {
-		List<String> entry = allPuzzles.get(getLevel(b.getDifficulty()));
-		entry.add(entryString(b));
+		allPuzzles.get(getLevel(b.getDifficulty())).add(new PuzzleEntry(b.toPuzzleString(), b.toSolutionString()));
 	}
 	
 	/**
