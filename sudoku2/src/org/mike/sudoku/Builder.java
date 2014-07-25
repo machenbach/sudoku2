@@ -3,6 +3,7 @@ package org.mike.sudoku;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 import org.mike.sudoku.Solver.Difficulty;
 import org.mike.sudoku.mask.PuzzleMask;
@@ -93,7 +94,9 @@ public class Builder {
 			Solver solver = new Solver(toPuzzleString());
 			// inner loop that attempts to solve
 			Puzzle p = solver.solve();
-			if (toSolutionString().equals(p.toString())) {
+			// if we can solve it, and it isn't ambiguous we have a solution
+			if (toSolutionString().equals(p.toString()) &&
+					!puzzleAmbiguous()) {
 				// We have a solution, so return
 				solverTries = solver.getSolveTries();
 				solverCoverage = solver.getCoverage();
@@ -384,5 +387,133 @@ public class Builder {
 			}
 		}
 		return sb.toString();
+	}
+	
+	/**
+	 * Filter ambiguous puzzles.
+	 * An ambiguous puzzle has two valid solutions, and is not considered good form.  The easiest
+	 * way for this to happen is to have two columns or rows in a set of boxes that hidden, and are
+	 * just flipped.  This routine checks the rows and columns of each set of three, and looks for
+	 * this situation
+	 */
+	
+	// Store a pair of numbers.  h is the higher one, l is the lower one.  We only care if pairs are equal
+	class Pair {
+		int h;
+		int l;
+	
+		public Pair () {
+			super();
+		}
+		
+		public Pair (int a, int b) {
+			if (a > b) {
+				h = a;
+				l = b;
+			}
+			else {
+				h = b;
+				l = a;
+			}
+		}
+
+		@Override
+		public int hashCode() {
+			return (l + h * 13);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return h == ((Pair)obj).h && l == ((Pair)obj).l;
+		}
+		
+		
+	}
+	
+	// scan the rows. We scan by row pairs
+	boolean rowAmbiguous(int r1, int r2) 
+	{
+		// Use pairSet to track the pairs we've seen
+		Set<Pair> pairSet = new HashSet<>();
+		for (int c : new Range(9)) {
+			// if both squares in r1 and r2 are hidden, we have a pair
+			if (!(mask.show(r1, c) ||mask.show(r2, c))) {
+				Pair p = new Pair(solution[r1][c], solution[r2][c]);
+				// if we have seen this pair before, we have an ambiguous puzzle
+				if (pairSet.contains(p)) {
+					return true;
+				}
+				pairSet.add(p);
+			}
+		}
+		return false;
+	}
+	
+	// scan the three pairs in this block.  Note that rowBase is the base row number, not a box number
+	boolean rowBoxAmbiguous(int rowBase)
+	{
+		if (rowAmbiguous(rowBase, rowBase + 1)) {
+			return true;
+		}
+		if (rowAmbiguous(rowBase, rowBase + 2)) {
+			return true;
+		}
+		if (rowAmbiguous(rowBase + 1, rowBase + 2)) {
+			return true;
+		}
+		return false;
+	}
+
+	// scan the columns. We scan by column pairs
+	boolean colAmbiguous(int c1, int c2) 
+	{
+		// Use pairSet to track the pairs we've seen
+		Set<Pair> pairSet = new HashSet<>();
+		for (int r : new Range(9)) {
+			// if both squares in r1 and r2 are hidden, we have a pair
+			if (!(mask.show(r, c1) ||mask.show(r, c2))) {
+				Pair p = new Pair(solution[r][c1], solution[r][c2]);
+				// if we have seen this pair before, we have an ambiguous puzzle
+				if (pairSet.contains(p)) {
+					return true;
+				}
+				pairSet.add(p);
+			}
+		}
+		return false;
+	}
+	
+	// scan the three pairs in this block.  Note that rowBase is the base column number, not a box number
+	boolean colBoxAmbiguous(int colBase)
+	{
+		if (rowAmbiguous(colBase, colBase + 1)) {
+			return true;
+		}
+		if (rowAmbiguous(colBase, colBase + 2)) {
+			return true;
+		}
+		if (rowAmbiguous(colBase + 1, colBase + 2)) {
+			return true;
+		}
+		return false;
+	}
+	
+	boolean puzzleAmbiguous()
+	{
+		// 0, 3, 6
+		for (int rowBase : new Range(0,9,3)) {
+			if (rowBoxAmbiguous(rowBase)) {
+				return true;
+			}
+		}
+
+		// 0, 3, 6
+		for (int colBase : new Range(0,9,3)) {
+			if (colBoxAmbiguous(colBase)) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 }
