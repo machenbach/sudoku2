@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html style="height:90%">
+<head>
+<title>Sudoku Puzzle Book</title>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+@media print {
+	.puzzle {
+        background-color: white;
+        height: 100%;
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        margin: 0;
+        padding: 15px;
+        font-size: 14px;
+        line-height: 18px;
+    }
+	footer {
+		page-break-after: always;
+	}
+}
+
+tr,td {
+	padding: 0;
+	border-collapse: collapse;
+	text-align: center;
+	border: 1px solid black;
+	width: 45px;
+	height: 45px;
+}
+
+table {
+	padding: 0;
+	border-collapse: collapse;
+	text-align: center;
+	width: 135px;
+	height: 135px;
+	font-family: sans-serif;
+	font-size: 30px;
+}
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+</head>
+<body onload="loadNav()" style="height:100%;">
+<script>
+function fillPuzzle(title, str) {
+	document.getElementById("puzzletitle").innerHTML = title;
+	var b = str.replace(/X/g," ");
+	for (var r = 0; r < 9; r++) {
+		for (var c = 0; c < 9; c++) {
+			var sqstr = 'sq' + r + c;
+			var sq  = document.getElementById('sq' + r + c);
+			var sqinter = b[r * 9 + c].toString();
+			sq.innerHTML = b[r * 9 + c].toString();
+		}
+	}
+}
+
+function loadNav() {
+	$("#nav").load("puzzle.html");
+}
+</script>
+<div id="container" style="width:100%; height:100%">
+<div id="nav" style="width:20%; height:90%; float:left; overflow:auto; border-style:solid">
+<button onclick="fillPuzzle('Puzzle 1 - Easy', '7XXXXX9433XXXX526XXXX3X871XX3XXX249XXX79XX52X5XX17X8XXXX3526XXXXX8417XXXX528XXXX4')">
+	Easy 1 </button>
+	<button onclick="fillPuzzle('Solution 1 - Easy', '785261943314795268296348715831652497647983521529174836473526189968417352152839674')">	Solution</button>  <br>
+</div>
+<button id="print" onclick="window.print()">Print</button>
+<div id="puzzle" class="puzzle" style="width:100%; height:100%; ">
+	<table
+		style="width: 405px; height: 405px; align: center; 
+				border: 2px solid black; margin-left: auto; margin-right: auto;
+				margin-top:40px">
+		<tr>
+		<th id="puzzletitle" colspan="3" style="margin-left:auto; margin-right: auto"/>
+		</tr>
+		<tr>
+			<td>
+				<table>
+					<tr>
+						<td id="sq00"></td>
+						<td id="sq01"></td>
+						<td id="sq02"></td>
+					</tr>
+					<tr>
+						<td id="sq10"></td>
+						<td id="sq11"></td>
+						<td id="sq12"></td>
+					</tr>
+					<tr>
+						<td id="sq20"></td>
+						<td id="sq21"></td>
+						<td id="sq22"></td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<table>
+					<tr>
+						<td id="sq03"></td>
+						<td id="sq04"></td>
+						<td id="sq05"></td>
+					</tr>
+					<tr>
+						<td id="sq13"></td>
+						<td id="sq14"></td>
+						<td id="sq15"></td>
+					</tr>
+					<tr>
+						<td id="sq23"></td>
+						<td id="sq24"></td>
+						<td id="sq25"></td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<table>
+					<tr>
+						<td id="sq06"></td>
+						<td id="sq07"></td>
+						<td id="sq08"></td>
+					</tr>
+					<tr>
+						<td id="sq16"></td>
+						<td id="sq17"></td>
+						<td id="sq18"></td>
+					</tr>
+					<tr>
+						<td id="sq26"></td>
+						<td id="sq27"></td>
+						<td id="sq28"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<table>
+					<tr>
+						<td id="sq30"></td>
+						<td id="sq31"></td>
+						<td id="sq32"></td>
+					</tr>
+					<tr>
+						<td id="sq40"></td>
+						<td id="sq41"></td>
+						<td id="sq42"></td>
+					</tr>
+					<tr>
+						<td id="sq50"></td>
+						<td id="sq51"></td>
+						<td id="sq52"></td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<table>
+					<tr>
+						<td id="sq33"></td>
+						<td id="sq34"></td>
+						<td id="sq35"></td>
+					</tr>
+					<tr>
+						<td id="sq43"></td>
+						<td id="sq44"></td>
+						<td id="sq45"></td>
+					</tr>
+					<tr>
+						<td id="sq53"></td>
+						<td id="sq54"></td>
+						<td id="sq55"></td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<table>
+					<tr>
+						<td id="sq36"></td>
+						<td id="sq37"></td>
+						<td id="sq38"></td>
+					</tr>
+					<tr>
+						<td id="sq46"></td>
+						<td id="sq47"></td>
+						<td id="sq48"></td>
+					</tr>
+					<tr>
+						<td id="sq56"></td>
+						<td id="sq57"></td>
+						<td id="sq58"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<table>
+					<tr>
+						<td id="sq60"></td>
+						<td id="sq61"></td>
+						<td id="sq62"></td>
+					</tr>
+					<tr>
+						<td id="sq70"></td>
+						<td id="sq71"></td>
+						<td id="sq72"></td>
+					</tr>
+					<tr>
+						<td id="sq80"></td>
+						<td id="sq81"></td>
+						<td id="sq82"></td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<table>
+					<tr>
+						<td id="sq63"></td>
+						<td id="sq64"></td>
+						<td id="sq65"></td>
+					</tr>
+					<tr>
+						<td id="sq73"></td>
+						<td id="sq74"></td>
+						<td id="sq75"></td>
+					</tr>
+					<tr>
+						<td id="sq83"></td>
+						<td id="sq84"></td>
+						<td id="sq85"></td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<table>
+					<tr>
+						<td id="sq66"></td>
+						<td id="sq67"></td>
+						<td id="sq68"></td>
+					</tr>
+					<tr>
+						<td id="sq76"></td>
+						<td id="sq77"></td>
+						<td id="sq78"></td>
+					</tr>
+					<tr>
+						<td id="sq86"></td>
+						<td id="sq87"></td>
+						<td id="sq88"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</div>
+</div>
+</body>
